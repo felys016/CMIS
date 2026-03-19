@@ -197,12 +197,87 @@ body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:10
 .end-sub{color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:.8rem;margin-bottom:8px}
 .end-round{color:#445566;font-size:.7rem;font-family:'Share Tech Mono',monospace;margin-bottom:32px}
 .end-deco{font-size:3rem;margin-bottom:20px;opacity:.4}
+
+/* scan line overlay */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9998;opacity:.6}
+
+/* title screen */
+#title-screen{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:40px 20px;text-align:center;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(0,212,255,.08),transparent),radial-gradient(ellipse 50% 60% at 100% 100%,rgba(255,85,0,.07),transparent),var(--bg0);position:relative;overflow:hidden}
+#title-screen.active{display:flex}
+#title-screen::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--c1),var(--gold),var(--c2),transparent);animation:scanX 4s linear infinite;opacity:.7}
+@keyframes scanX{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.title-eye{font-family:var(--fM);font-size:.7rem;letter-spacing:.5em;color:var(--c1);opacity:.6;margin-bottom:20px;text-transform:uppercase}
+.title-main{font-family:var(--fT);font-size:clamp(52px,9vw,112px);line-height:.88;letter-spacing:.06em;background:linear-gradient(165deg,#fff 0%,var(--c1) 60%,#0090bb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 30px rgba(0,212,255,.35));animation:titleGlow 4s ease-in-out infinite alternate}
+@keyframes titleGlow{from{filter:drop-shadow(0 0 20px rgba(0,212,255,.2))}to{filter:drop-shadow(0 0 50px rgba(0,212,255,.6)) drop-shadow(0 0 80px rgba(0,212,255,.2))}}
+.title-combat{font-family:var(--fT);font-size:clamp(14px,2.2vw,26px);letter-spacing:.8em;color:var(--c2);filter:drop-shadow(0 0 12px rgba(255,85,0,.5));margin-top:4px}
+.title-ver{font-family:var(--fM);font-size:.62rem;letter-spacing:.3em;color:var(--dim);margin-top:8px}
+.title-divider{width:300px;height:1px;margin:28px auto;background:linear-gradient(90deg,transparent,var(--c1),var(--gold),var(--c2),transparent);position:relative}
+.title-divider::before,.title-divider::after{content:'◆';position:absolute;top:50%;transform:translateY(-50%);color:var(--gold);font-size:8px}
+.title-divider::before{left:28px}.title-divider::after{right:28px}
+.title-stats{display:flex;gap:36px;justify-content:center;margin-bottom:40px}
+.stat-num{font-family:var(--fT);font-size:2.8rem;color:var(--c1);line-height:1;letter-spacing:.05em}
+.stat-lbl{font-size:.62rem;letter-spacing:.25em;color:var(--dim);margin-top:1px;font-family:var(--fM)}
+.title-btns{display:flex;flex-direction:column;gap:12px;align-items:center}
+.btn-fire{font-family:var(--fT);font-size:1.4rem;letter-spacing:.3em;padding:14px 56px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--c2),#cc1100);color:#fff;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:all .25s;box-shadow:0 0 30px rgba(255,85,0,.35),inset 0 1px 0 rgba(255,255,255,.15);position:relative;overflow:hidden}
+.btn-fire:hover{box-shadow:0 0 55px rgba(255,85,0,.65),0 0 90px rgba(255,85,0,.25);transform:scale(1.04)}
+.btn-ice{font-family:var(--fT);font-size:1.1rem;letter-spacing:.2em;padding:10px 40px;border:1px solid var(--c1);background:rgba(0,212,255,.05);color:var(--c1);cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:all .2s}
+.btn-ice:hover{background:rgba(0,212,255,.12);box-shadow:0 0 22px rgba(0,212,255,.28)}
+.title-tagline{margin-top:28px;font-size:.75rem;letter-spacing:.08em;color:var(--dim);line-height:2;font-family:var(--fM)}
+.title-tagline span{color:var(--c1)}
+
+/* GZ tab special indicator */
+.cat-tab.gz-tab{border-right:none}
+.cat-tab.gz-tab.active{color:var(--c2);border-bottom-color:var(--c2)}
+.gz-vs-badge{font-size:.55rem;display:inline-block;margin-left:6px;background:rgba(255,85,0,.2);color:var(--c2);padding:1px 5px;border:1px solid rgba(255,85,0,.4);font-family:var(--fM);letter-spacing:.05em;vertical-align:middle}
+
+/* SP rarity */
+.c-rarity-SP .c-rarity-dot{background:var(--c1);color:var(--c1)}
+.c-rarity-SP .c-rarity-label{color:var(--c1)}
+.rarity-SP .char-rarity-tag{color:var(--c1);border-color:rgba(0,212,255,.4);background:#001422}
+
+/* better combatant card active/active-glow */
+.combatant-card.is-active{border-color:rgba(240,192,64,.6)!important;box-shadow:0 0 18px rgba(240,192,64,.2),inset 0 0 30px rgba(240,192,64,.04)!important}
+.combatant-card.is-target-mode{cursor:crosshair}
+
+/* judgment animation panel */
+.judge-panel{text-align:center;padding:12px 20px;font-family:var(--fT)}
+.judge-title{font-size:1.1rem;letter-spacing:.35em;color:var(--c1);animation:gpulse .8s ease-in-out infinite alternate}
+.judge-bar{display:flex;gap:4px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+.judge-pip{width:12px;height:12px;border-radius:50%;background:var(--border);border:1px solid var(--border2);transition:all .3s}
+.judge-pip.sw{background:var(--c2);border-color:var(--c2);box-shadow:0 0 8px var(--c2)}
+.judge-pip.miss{background:var(--border2);border-color:var(--dim)}
+.judge-status{font-family:var(--fM);font-size:.7rem;color:var(--c1);letter-spacing:.1em;margin-top:4px}
+
+/* c-name use Bebas */
+.c-name{font-family:var(--fT);font-size:1rem;letter-spacing:.06em}
 </style>
 </head>
 <body>
 
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen">
+  <div class="title-eye">Official Server · Ver 2.5 · Chiangmai</div>
+  <div class="title-main">清迈国际格斗</div>
+  <div class="title-combat">INTERNATIONAL COMBAT</div>
+  <div class="title-ver">4v4 TACTICAL FIGHTING SYSTEM</div>
+  <div class="title-divider"></div>
+  <div class="title-stats">
+    <div><div class="stat-num">19</div><div class="stat-lbl">FIGHTERS</div></div>
+    <div><div class="stat-num">4v4</div><div class="stat-lbl">FORMAT</div></div>
+    <div><div class="stat-num">∞</div><div class="stat-lbl">COMBOS</div></div>
+  </div>
+  <div class="title-btns">
+    <button class="btn-fire" onclick="goSelect()">⚔ START GAME</button>
+    <button class="btn-ice" onclick="quickMatch()">🎲 QUICK MATCH</button>
+  </div>
+  <div class="title-tagline">
+    <span>19</span> 可选角色 · <span>真实技能</span>系统 · 触发值<span>大招</span>机制<br>
+    护盾系统 · 体力系统 · <span>爆头</span>/闪避判定 · 手冲世界<span>蛇鲸判定</span>
+  </div>
+</div>
+
 <!-- SELECT SCREEN -->
-<div id="select-screen" class="screen active">
+<div id="select-screen" class="screen">
   <div class="sel-header">
     <div class="sel-title">清迈国际格斗</div>
     <div class="sel-sub">CHIANG MAI INTERNATIONAL FIGHTING ✦ BATTLE SIMULATOR v1.0</div>
@@ -210,7 +285,7 @@ body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:10
   <div class="sel-body">
     <div class="cat-tabs">
       <button class="cat-tab active" id="tab-orig" onclick="switchTab('orig')">原版 (15)</button>
-      <button class="cat-tab" id="tab-gz" onclick="switchTab('gz')">生殖隔离 (7) ⚔</button>
+      <button class="cat-tab gz-tab" id="tab-gz" onclick="switchTab('gz')">生殖隔离 (8)<span class="gz-vs-badge">GZ vs GZ</span></button>
     </div>
     <div class="char-grid" id="char-grid"></div>
   </div>
@@ -260,6 +335,7 @@ body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:10
     <div class="end-sub" id="end-subtitle"></div>
     <div class="end-round" id="end-round"></div>
     <button class="btn btn-go" onclick="resetGame()">再来一局 ▶</button>
+    <button class="btn btn-ice" onclick="goTitle()" style="margin-top:8px">主菜单</button>
   </div>
 </div>
 
@@ -996,25 +1072,42 @@ const GZ_CHARS = {
         // Initial hit
         L(G,'🌍 手冲世界展开！','ult');
         aliveEnemies(me,G).forEach(e=>D(me,e,G,145,'magic'));
-        // Pre-roll all judgments
+        // Pre-roll all judgments (fixed loop)
         let judgments=[];
-        for(let j=1;j<=20;j++){
+        let broke=false;
+        for(let j=1;j<=9;j++){
           let isSW=roll(0.25);
           judgments.push({j,isSW});
-          if(isSW&&j<10)break; // first SW before cap ends loop early
-          if(j>=10){judgments.push({j:j,isSW:true,forced:true});break;}
+          if(isSW){broke=true;break;}
         }
+        if(!broke){
+          for(let j=10;j<=20;j++){
+            judgments.push({j,isSW:true,forced:true});
+          }
+        }
+        // Show judge panel immediately
+        const jPanel=()=>{
+          let pips=judgments.map((jd,i)=>`<div class="judge-pip ${jd._revealed?(jd.isSW?'sw':'miss'):''}"></div>`).join('');
+          return `<div class="judge-panel"><div class="judge-title">⚙ 手冲世界 — 蛇鲸判定</div><div class="judge-bar" id="judge-bar">${pips}</div><div class="judge-status" id="judge-status">初始145%完成，判定中...</div></div>`;
+        };
+        document.getElementById('action-content').innerHTML=jPanel();
         // Queue each judgment at 0.6s intervals
         judgments.forEach(({j,isSW,forced},idx)=>{
           AQ.add(()=>{
+            judgments[idx]._revealed=true;
+            const bar=document.getElementById('judge-bar');
+            if(bar){bar.innerHTML=judgments.map((jd,i)=>`<div class="judge-pip ${jd._revealed?(jd.isSW?'sw':'miss'):''}"></div>`).join('');}
+            const st=document.getElementById('judge-status');
             if(isSW){
               aliveEnemies(me,G).forEach(e=>D(me,e,G,Math.round(220*(1+bonus)),'magic'));
               aliveAllies(me,G).forEach(a=>{a.hp=Math.min(a.maxHP,a.hp+100);a.stamina=Math.min(MAX_STA,a.stamina+2);a.trigger=Math.min(99,a.trigger+2);});
               L(G,`🐋 第${j}次判定 → 蛇鲸现身！220%全体！`,'snakewhale');
+              if(st)st.textContent=`🐋 第${j}次 — 蛇鲸！220%全体！`;
             } else {
-              L(G,`第${j}次判定 → 继续...`,'judgment');
+              L(G,`第${j}次判定 → 无蛇鲸，继续`,'judgment');
+              if(st)st.textContent=`第${j}次 — 未现身，继续...`;
             }
-          },idx===0?300:600);
+          },600);
         });
         // Queue final wrap-up
         AQ.add(()=>{
@@ -1022,10 +1115,12 @@ const GZ_CHARS = {
           if(sw>7){
             let extra=(sw-7)*220;
             aliveEnemies(me,G).forEach(e=>D(me,e,G,extra,'magic'));
-            L(G,`💥 手冲超载！额外${extra}%！`,'ult');
+            L(G,`💥 手冲超载！${sw}次蛇鲸！额外${extra}%！`,'ult');
           }
           L(G,`手冲世界结束，蛇鲸×${sw}！`,'special');
           B(me,G,'dmgBonus',-0.3,99,'虚（-30%）',me);
+          const st=document.getElementById('judge-status');
+          if(st)st.textContent=`结束 — ${sw}次蛇鲸${sw>7?' 超载！':''}`;
         },600);
       }},
     recall:{name:'肾斗士觉醒',desc:'清除虚状态，大招威力重置，+5触发值',
@@ -1248,7 +1343,7 @@ for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
 // Addy immunity handled in original D() below
 
 const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
-const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp','victoria','nadia','akar'];
 let selectedCategory=null;
 
 // ═══════════════ GAME STATE ═══════════════
@@ -1759,8 +1854,22 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
+// ═══════════════ TITLE SCREEN HELPERS ═══════════════
+function goSelect(){showScreen('select-screen');renderSelectScreen();}
+function quickMatch(){
+  selectedIds=[];selectedCategory=null;activeTab='orig';
+  let pool=shuffle([...ORIG_IDS]);
+  selectedIds=pool.slice(0,4);
+  selectedCategory='orig';
+  showScreen('select-screen');renderSelectScreen();
+}
+function goTitle(){
+  selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';
+  showScreen('title-screen');
+}
+
 // ═══════════════ INIT ═══════════════
-renderSelectScreen();
+showScreen('title-screen');
 </script>
 </body>
 </html>
