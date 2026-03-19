@@ -5,17 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>清迈国际格斗 ✦ Battle Simulator</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg0:#05050f;--bg1:#08081a;--bg2:#0d0d20;--bg3:#111128;
-  --border:#1e1e3a;--border2:#2a2a48;
-  --text:#c8d0f0;--muted:#5060880;--dim:#303050;
-  --gold:#d4a84b;--gold2:#f0c866;--purple:#b44fff;--purple2:#d080ff;
-  --blue:#4488ff;--red:#ff4455;--green:#44dd88;--teal:#33ccbb;
-  --rarity-SSR:#d4a84b;--rarity-SSSR:#b44fff;--rarity-SR:#7799bb;--rarity-R:#cc7744;
+  --bg0:#030507;--bg1:#060910;--bg2:#0a0d18;--bg3:#0f1220;
+  --border:#182030;--border2:#243048;
+  --text:#c0d0ee;--dim:#405060;
+  --gold:#f0c040;--gold2:#ffe060;--c1:#00d4ff;--c2:#ff5500;
+  --purple:#b06aff;--red:#ff3344;--green:#39ff88;
+  --rarity-SSR:#f0c040;--rarity-SSSR:#cc55ff;--rarity-SR:#6699cc;--rarity-R:#cc7744;--rarity-SP:#ff44cc;--rarity-AT:#39ff88;
+  --fT:'Bebas Neue',sans-serif;--fB:'Barlow Condensed',sans-serif;--fM:'JetBrains Mono',monospace;
 }
-body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;font-size:15px}
+body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:100vh;overflow-x:hidden;font-size:15px}
 .screen{display:none}
 .screen.active{display:block}
 
@@ -23,8 +24,8 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 #select-screen{min-height:100vh;display:none;flex-direction:column}
 #select-screen.active{display:flex}
 .sel-header{padding:28px 24px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0a0a20 0%,var(--bg0) 100%)}
-.sel-title{font-size:2rem;font-weight:700;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;margin-bottom:2px}
-.sel-sub{font-size:.75rem;letter-spacing:.2em;color:var(--dim);font-family:'Share Tech Mono',monospace}
+.sel-title{font-family:var(--fT);font-size:2.4rem;letter-spacing:.5em;color:var(--c1);text-shadow:0 0 20px rgba(0,212,255,.4);text-transform:uppercase;margin-bottom:2px}
+.sel-sub{font-size:.68rem;letter-spacing:.25em;color:var(--dim);font-family:var(--fM)}
 .sel-body{flex:1;padding:16px 20px;overflow-y:auto}
 .char-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:960px;margin:0 auto}
 .char-card{border:1px solid var(--border);border-radius:10px;padding:12px 10px;cursor:pointer;transition:all .18s;position:relative;background:var(--bg2);user-select:none;overflow:hidden}
@@ -41,6 +42,8 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .rarity-SSSR .char-rarity-tag{color:var(--rarity-SSSR);border-color:#b44fff44;background:#180020}
 .rarity-SR .char-rarity-tag{color:var(--rarity-SR);border-color:#7799bb44;background:#0a1018}
 .rarity-R .char-rarity-tag{color:var(--rarity-R);border-color:#cc774444;background:#181008}
+.rarity-SP .char-rarity-tag{color:var(--rarity-SP);border-color:#ff44cc44;background:#1a0018}
+.rarity-AT .char-rarity-tag{color:var(--rarity-AT);border-color:#39ff8844;background:#001a08}
 .char-desc{font-size:.62rem;color:#506080;margin-top:3px;line-height:1.3}
 .char-faction{font-size:.55rem;color:#445;margin-top:2px}
 .sel-footer{padding:14px 20px;border-top:1px solid var(--border);background:var(--bg1);display:flex;align-items:center;justify-content:space-between}
@@ -51,12 +54,12 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .sel-pip.filled{background:var(--gold);border-color:var(--gold2);box-shadow:0 0 6px var(--gold)}
 
 /* ── BUTTONS ─────────────────── */
-.btn{background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 22px;border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .15s;letter-spacing:.08em;font-family:'Rajdhani',sans-serif;font-weight:500}
+.btn{background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 22px;cursor:pointer;font-size:.82rem;transition:all .15s;letter-spacing:.1em;font-family:var(--fB);font-weight:600;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
 .btn:hover{background:var(--bg3);border-color:#3a3a60}
 .btn:disabled{opacity:.25;cursor:not-allowed}
 .btn-primary{background:#131d3a;border-color:#3355bb;color:#88aaff}
 .btn-primary:hover:not(:disabled){background:#1a2850;border-color:#5577dd}
-.btn-go{background:#1a1000;border-color:var(--gold);color:var(--gold);padding:10px 32px;font-size:1rem;font-weight:700;letter-spacing:.15em}
+.btn-go{background:#181000;border-color:var(--gold);color:var(--gold);padding:11px 32px;font-size:1rem;font-family:var(--fT);letter-spacing:.25em}
 .btn-go:hover:not(:disabled){background:#251800;border-color:var(--gold2);box-shadow:0 0 12px #d4a84b44}
 .btn-danger{background:#1e0808;border-color:#662222;color:#ff8888;padding:5px 14px;font-size:.75rem}
 .btn-danger:hover{background:#2a0a0a;border-color:#993333}
@@ -64,8 +67,9 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 /* ── BATTLE SCREEN ─────────────────── */
 #battle-screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
 #battle-screen.active{display:flex}
-.battle-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
-.round-badge{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--gold);background:#1a1000;border:1px solid #3a2800;padding:4px 12px;border-radius:5px;letter-spacing:.1em}
+.battle-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;overflow:hidden}
+.battle-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c1),var(--gold),var(--c2),transparent);opacity:.6}
+.round-badge{font-family:var(--fT);font-size:1.1rem;letter-spacing:.25em;color:var(--gold);text-shadow:0 0 10px rgba(240,192,64,.5)}
 .hdr-title{font-size:.7rem;letter-spacing:.3em;color:var(--dim);font-weight:400}
 
 .teams-wrapper{display:flex;flex-direction:column;flex:1;overflow:hidden}
@@ -74,9 +78,11 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .team-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .combatant-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 
-.combatant-card{border:1px solid var(--border);border-radius:10px;padding:9px;background:var(--bg2);position:relative;transition:border-color .2s,box-shadow .2s,opacity .2s;min-height:118px;overflow:hidden}
+.combatant-card{border:1px solid var(--border);border-radius:3px;padding:9px;background:var(--bg2);position:relative;transition:border-color .2s,box-shadow .2s,opacity .2s;min-height:120px;overflow:hidden}
+.combatant-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .2s}
 .combatant-card::before{content:'';position:absolute;inset:0;opacity:.04;background:var(--card-color,#fff)}
-.combatant-card.is-active{border-color:#5577ff;box-shadow:0 0 14px #5577ff33;background:var(--bg3)}
+.combatant-card.is-active{background:var(--bg3)}
+.combatant-card.is-active::before{background:var(--gold);box-shadow:0 0 8px rgba(240,192,64,.5)}
 .combatant-card.is-target-mode{cursor:pointer;border-style:dashed}
 .combatant-card.is-target-mode:hover{border-color:#ffaa44;box-shadow:0 0 10px #ffaa4433;border-style:solid}
 .combatant-card.is-dead{opacity:.28;filter:grayscale(1) brightness(.6)}
@@ -106,8 +112,8 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .cat-tab.locked{opacity:.3;cursor:not-allowed}
 .cat-divider{font-size:.6rem;color:var(--dim);letter-spacing:.15em;margin:8px 0 6px;max-width:960px;margin:8px auto 6px;display:flex;align-items:center;gap:8px}
 .cat-divider::before,.cat-divider::after{content:'';flex:1;height:1px;background:var(--border)}
-.recall-btn{border:1px solid #2a3355;background:#0a0f1a;color:#88aadd;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:'Rajdhani',sans-serif}
-.recall-btn:hover:not(:disabled){background:#121a2e;border-color:#4466aa;transform:translateY(-2px)}
+.recall-btn{border:1px solid #2a1a44;background:#0a0614;color:var(--text);padding:7px 10px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:var(--fB);clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)}
+.recall-btn:hover:not(:disabled){background:#110920;border-color:#8855cc;transform:translateY(-2px) translateX(1px)}
 .recall-btn:disabled{opacity:.22;cursor:not-allowed}
 .recall-btn .skill-name{color:#88aadd}
 
@@ -133,7 +139,7 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .tag-special{color:#99bbff;border-color:#223355;background:#080f1a}
 
 /* ── LOG ─────────────────── */
-.log-section{background:#060610;border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:148px;overflow-y:auto;padding:7px 14px;font-size:.68rem;line-height:1.7;font-family:'Share Tech Mono',monospace;flex-shrink:0}
+.log-section{background:#030508;border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:148px;overflow-y:auto;padding:7px 14px;font-size:.67rem;line-height:1.7;font-family:var(--fM);flex-shrink:0}
 .log-section::-webkit-scrollbar{width:3px}
 .log-section::-webkit-scrollbar-thumb{background:#222240;border-radius:2px}
 .log-entry{padding:0}
@@ -152,16 +158,20 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .log-death{color:#ff3344;font-weight:bold}
 .log-normal{color:#485870}
 .log-win{color:var(--gold);font-size:.8rem;text-align:center;padding:3px 0}
+.log-entry{animation:logIn .25s ease-out}
+@keyframes logIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.log-judgment{color:var(--c1);font-weight:600}
+.log-snakewhale{color:var(--c2);font-weight:700}
 
 /* ── ACTION PANEL ─────────────────── */
 .action-panel{padding:10px 14px 12px;background:var(--bg1);border-top:1px solid var(--border);flex-shrink:0;min-height:118px}
-.action-title{font-size:.62rem;letter-spacing:.18em;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.action-title{font-size:.6rem;letter-spacing:.22em;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-family:var(--fT)}
 .action-title::after{content:'';flex:1;height:1px;background:var(--border)}
 .action-char{color:#aabcee;font-weight:600;font-size:.9rem;font-family:'Rajdhani',sans-serif;letter-spacing:.05em}
 .skill-buttons{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
 .skill-buttons::-webkit-scrollbar{height:3px}
 .skill-buttons::-webkit-scrollbar-thumb{background:#222240}
-.skill-btn{border:1px solid var(--border2);background:var(--bg2);color:var(--text);padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:'Rajdhani',sans-serif}
+.skill-btn{border:1px solid var(--border2);background:var(--bg2);color:var(--text);padding:7px 10px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:var(--fB);clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)}
 .skill-btn:hover:not(:disabled){background:var(--bg3);border-color:#404070;transform:translateY(-2px);box-shadow:0 4px 12px #00000088}
 .skill-btn:disabled{opacity:.25;cursor:not-allowed;transform:none}
 .skill-btn.ult-btn{border-color:#3a2800;background:#0f0a00}
@@ -173,7 +183,9 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .ult-icon{display:inline-block;width:12px;height:12px;background:var(--gold);border-radius:50%;margin-right:4px;vertical-align:middle;font-size:.5rem;line-height:12px;text-align:center;color:#000;font-weight:700}
 .execute-area{display:flex;gap:10px;align-items:center;margin-top:8px}
 .execute-hint{font-size:.65rem;color:var(--dim);font-family:'Share Tech Mono',monospace}
-.target-hint{color:#ffaa44;font-size:.7rem;margin-top:6px;font-family:'Share Tech Mono',monospace;animation:gpulse 1s ease-in-out infinite alternate;padding:4px 8px;background:#1a0d00;border:1px solid #5a3300;border-radius:5px;display:inline-block}
+.target-hint{color:var(--c2);font-size:.7rem;margin-top:6px;font-family:var(--fM);animation:gpulse 1s ease-in-out infinite alternate;padding:4px 8px;background:#1a0d00;border:1px solid #4a2800;display:inline-block}
+.anim-waiting{text-align:center;padding:16px;font-family:var(--fT);font-size:1.2rem;letter-spacing:.3em;color:var(--c1)}
+.anim-waiting span{animation:gpulse .7s ease-in-out infinite alternate}
 
 /* ── END SCREEN ─────────────────── */
 #end-screen{display:none;align-items:center;justify-content:center;min-height:100vh}
@@ -197,15 +209,15 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
   </div>
   <div class="sel-body">
     <div class="cat-tabs">
-      <button class="cat-tab active" id="tab-orig" onclick="switchTab('orig')">原版角色 (15)</button>
-      <button class="cat-tab" id="tab-gz" onclick="switchTab('gz')">生殖隔离 (4)</button>
+      <button class="cat-tab active" id="tab-orig" onclick="switchTab('orig')">原版 (15)</button>
+      <button class="cat-tab" id="tab-gz" onclick="switchTab('gz')">生殖隔离 (7) ⚔</button>
     </div>
     <div class="char-grid" id="char-grid"></div>
   </div>
   <div class="sel-footer">
     <div>
       <div class="sel-count">选择 4 名角色 &nbsp;·&nbsp; <span id="sel-n">0</span>/4 已选
-        <span id="cat-lock-hint" style="margin-left:8px;font-size:.6rem;color:#553300"></span>
+        <span id="cat-lock-hint" style="margin-left:8px;font-size:.6rem;font-family:var(--fM);color:#553300"></span>
       </div>
       <div class="pip-track" style="margin-top:6px">
         <div class="sel-pip" id="pip0"></div><div class="sel-pip" id="pip1"></div>
@@ -256,6 +268,25 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 const BASE_DMG = 100, MAX_HP = 1000, START_STA = 5, MAX_STA = 8, STA_REGEN = 2, TRIG_ULT = 10;
 const DODGE_RATE = 0.10, HS_RATE = 0.10, HS_MULT = 1.5;
 
+// ═══════════════ ANIMATION QUEUE ═══════════════
+const AQ={
+  q:[],running:false,
+  add(fn,delay=600){this.q.push({fn,delay});},
+  run(done){
+    if(!this.q.length){done?.();return;}
+    this.running=true;
+    const tick=()=>{
+      if(!this.q.length){this.running=false;done?.();return;}
+      const{fn,delay}=this.q.shift();
+      fn();
+      renderBattle();
+      setTimeout(tick,delay);
+    };
+    tick();
+  },
+  clear(){this.q=[];this.running=false;}
+};
+
 // ═══════════════ HELPERS ═══════════════
 const rng = n => Math.floor(Math.random() * n);
 const ri = n => Math.floor(Math.random() * n);
@@ -272,6 +303,7 @@ function L(G,msg,type='normal'){G.log.push({msg,type,round:G.round});}
 
 function D(src,tgt,G,pct,type='body'){
   if(!tgt||tgt.isDead||tgt.isAbsent)return 0;
+  if(tgt._physicMagicImmune&&(type==='body'||type==='magic')){L(G,`${tgt.name} 免疫体术/法术！`,'dodge');return 0;}
   if(roll(DODGE_RATE)){L(G,`${tgt.name} 躲开了 ${src.name} 的攻击！`,'dodge');return 0;}
   let d=BASE_DMG*pct/100;
   d*=(1+(src.dmgBonus||0));
@@ -961,24 +993,40 @@ const GZ_CHARS = {
       exec(me,t,G){
         me._ultCount=(me._ultCount||0)+1;
         let bonus=me._ultCount>1?(me._ultCount-1)*0.2:0;
-        L(G,'爱德华 手冲世界！','ult');
+        // Initial hit
+        L(G,'🌍 手冲世界展开！','ult');
         aliveEnemies(me,G).forEach(e=>D(me,e,G,145,'magic'));
-        let loops=0,snakeWhales=0;
-        while(loops<20){
-          loops++;
-          if(roll(0.25)||loops>=10){
-            snakeWhales++;
-            aliveEnemies(me,G).forEach(e=>D(me,e,G,Math.round(220*(1+bonus)),'magic'));
-            aliveAllies(me,G).forEach(a=>{a.hp=Math.min(a.maxHP,a.hp+100);a.stamina=Math.min(MAX_STA,a.stamina+2);a.trigger=Math.min(99,a.trigger+2);});
-            if(loops<10)break;
+        // Pre-roll all judgments
+        let judgments=[];
+        for(let j=1;j<=20;j++){
+          let isSW=roll(0.25);
+          judgments.push({j,isSW});
+          if(isSW&&j<10)break; // first SW before cap ends loop early
+          if(j>=10){judgments.push({j:j,isSW:true,forced:true});break;}
+        }
+        // Queue each judgment at 0.6s intervals
+        judgments.forEach(({j,isSW,forced},idx)=>{
+          AQ.add(()=>{
+            if(isSW){
+              aliveEnemies(me,G).forEach(e=>D(me,e,G,Math.round(220*(1+bonus)),'magic'));
+              aliveAllies(me,G).forEach(a=>{a.hp=Math.min(a.maxHP,a.hp+100);a.stamina=Math.min(MAX_STA,a.stamina+2);a.trigger=Math.min(99,a.trigger+2);});
+              L(G,`🐋 第${j}次判定 → 蛇鲸现身！220%全体！`,'snakewhale');
+            } else {
+              L(G,`第${j}次判定 → 继续...`,'judgment');
+            }
+          },idx===0?300:600);
+        });
+        // Queue final wrap-up
+        AQ.add(()=>{
+          let sw=judgments.filter(j=>j.isSW).length;
+          if(sw>7){
+            let extra=(sw-7)*220;
+            aliveEnemies(me,G).forEach(e=>D(me,e,G,extra,'magic'));
+            L(G,`💥 手冲超载！额外${extra}%！`,'ult');
           }
-        }
-        if(snakeWhales>7){
-          let extra=(snakeWhales-7)*220;aliveEnemies(me,G).forEach(e=>D(me,e,G,extra,'magic'));
-          L(G,`手冲世界超载！额外 ${extra}%！`,'ult');
-        }
-        L(G,`蛇鲸共现 ${snakeWhales} 次！`,'special');
-        B(me,G,'dmgBonus',-0.3,99,'虚（-30%）',me);
+          L(G,`手冲世界结束，蛇鲸×${sw}！`,'special');
+          B(me,G,'dmgBonus',-0.3,99,'虚（-30%）',me);
+        },600);
       }},
     recall:{name:'肾斗士觉醒',desc:'清除虚状态，大招威力重置，+5触发值',
       exec(me,t,G){me.buffs=me.buffs.filter(b=>b.label!=='虚（-30%）');recomputeStats(me);me.trigger=Math.min(99,me.trigger+5);L(G,'爱德华 肾斗士！虚状态清除！','special');}},
@@ -1065,10 +1113,142 @@ const GZ_CHARS = {
       }}
   }
 };
+  // ── GREG SR ── 音乐混乱
+  greg:{
+    id:'greg',name:'格雷格',rarity:'SR',color:'#a855f7',faction:['生殖隔离'],desc:'音乐混乱/全体控制',
+    skills:[
+      {name:'乱弹琴',cost:1,trig:2,target:'none',desc:'全体70%法伤+随机眩晕1人',
+        exec(me,t,G){
+          aliveEnemies(me,G).forEach(e=>D(me,e,G,70,'magic'));
+          let es=aliveEnemies(me,G);if(es.length)ST(pick(es),G,1,me);
+          L(G,'格雷格 乱弹琴！全体70%+眩晕','special');}},
+      {name:'阴乐吉他',cost:2,trig:3,target:'none',desc:'敌方1-2人伤害-30%×2回，己方+15%伤×2回',
+        exec(me,t,G){
+          let es=aliveEnemies(me,G);let n=roll(2)+1;
+          shuffle([...es]).slice(0,n).forEach(e=>B(e,G,'dmgBonus',-0.3,2,'-30%阴乐',me));
+          aliveAllies(me,G).forEach(a=>B(a,G,'dmgBonus',0.15,2,'+15%共鸣',me));
+          L(G,`格雷格 阴乐吉他！${n}人-30%，己方+15%`,'special');}},
+      {name:'死亡金属',cost:3,trig:4,target:'none',desc:'全体120%法伤+眩晕随机2人',
+        exec(me,t,G){
+          aliveEnemies(me,G).forEach(e=>D(me,e,G,120,'magic'));
+          shuffle([...aliveEnemies(me,G)]).slice(0,2).forEach(e=>ST(e,G,1,me));
+          L(G,'格雷格 死亡金属！全体120%+2人眩晕','special');}}
+    ],
+    ult:{name:'不和谐终曲',target:'none',desc:'全体150%法伤，2回合内敌方技能50%反噬',
+      exec(me,t,G){
+        aliveEnemies(me,G).forEach(e=>{
+          D(me,e,G,150,'magic');
+          if(!e.isDead)B(e,G,'dmgBonus',-0.5,2,'混乱-50%',me);
+        });
+        L(G,'格雷格 不和谐终曲！全体150%+混乱debuff！','ult');}},
+    recall:{name:'传说即兴演奏',desc:'全队+2触发值+恢复30%HP',
+      exec(me,t,G){
+        aliveAllies(me,G).forEach(a=>{
+          a.trigger=Math.min(99,a.trigger+2);
+          H(a,G,30,me);
+        });
+        L(G,'格雷格 传说即兴！全队触发+2+回血30%','special');}},
+    passive:{desc:'3名以上敌人时，技能效果额外+20%',tick(){}}
+  },
+
+  // ── ADDY AT ── 版本外独立存在
+  addy:{
+    id:'addy',name:'阿爹·欧尼chan',rarity:'AT',color:'#39ff88',faction:['生殖隔离'],desc:'版本外/体术法术免疫',
+    skills:[
+      {name:'监控证据',cost:1,trig:2,target:'enemy',desc:'目标离场1回合-1体力-1触发',
+        exec(me,t,G){
+          t.isAbsent=true;t.absentTimer=1;
+          t.stamina=Math.max(0,t.stamina-1);t.trigger=Math.max(0,t.trigger-1);
+          L(G,`阿爹 监控证据！${t.name}离场1回合`,'special');}},
+      {name:'AURA',cost:1,trig:3,target:'none',desc:'伤害+300%一回合，体力回满',
+        exec(me,t,G){
+          B(me,G,'dmgBonus',3.0,1,'AURA+300%',me);
+          me.stamina=MAX_STA;
+          L(G,'阿爹 AURA！伤害+300%，体力满','special');}},
+      {name:'好好看着吧',cost:1,trig:4,target:'enemy',desc:'350%特殊伤害（无视免疫）',
+        exec(me,t,G){
+          // Special type bypasses Addy's own immunity
+          let d=Math.round(BASE_DMG*3.5*(1+(me.dmgBonus||0)));
+          applyDmg(t,d);
+          if(t.hp<=0)t.isDead=true;
+          L(G,`阿爹 好好看着吧！${d}特殊伤害${t.isDead?' ☠':''}！`,'special');}}
+    ],
+    ult:{name:'别当欧尼酱',target:'none',desc:'全体600%特殊伤害+眩晕，女角色阵亡→阿爹自爆',
+      exec(me,t,G){
+        L(G,'😤 阿爹 别当欧尼酱！','ult');
+        let females=['charlotte','michelle','cici','feliz','madame','luoda'];
+        let femaleKilled=false;
+        aliveEnemies(me,G).forEach(e=>{
+          let d=Math.round(BASE_DMG*6.0*(1+(me.dmgBonus||0)));
+          applyDmg(e,d);if(e.hp<=0)e.isDead=true;
+          L(G,`→${e.name}: ${d}特殊伤害${e.isDead?' ☠':''}！`,'special');
+          if(e.isDead&&females.includes(e.charId))femaleKilled=true;
+          if(!e.isDead)ST(e,G,1,me);
+        });
+        if(femaleKilled){
+          me.hp=0;me.isDead=true;
+          L(G,'💀 女角色阵亡！阿爹当场暴毙！','death');
+        }}},
+    recall:{name:'两个卤蛋的欢乐时光',desc:'退场2回合，回来时伤害+100%',
+      exec(me,t,G){
+        me.isAbsent=true;me.absentTimer=2;me._eggPower=true;
+        L(G,'🥚 阿爹 卤蛋时光！退场2回合，回来+100%','special');}},
+    passive:{desc:'体术/法术免疫（仅受特殊伤害），HP上限100，女角色敌人阵亡→自爆',
+      onBattleStart(me,G){me.maxHP=100;me.hp=100;me._physicMagicImmune=true;L(G,'阿爹 无下限！HP=100，体术/法术免疫','passive');},
+      onReturn(me,G){
+        if(me._eggPower){
+          me._eggPower=false;
+          B(me,G,'dmgBonus',1.0,999,'+100%DMG(卤蛋)',me);
+          L(G,'阿爹 卤蛋归来！伤害+100%永久！','passive');
+        } else L(G,'阿爹 回来了','passive');
+      }}
+  },
+
+  // ── ZANE SP ── 通灵宗师·突破形态
+  zane_sp:{
+    id:'zane_sp',name:'Zane SP',rarity:'SP',color:'#4e99ff',faction:['生殖隔离','后山兄弟'],desc:'通灵宗师/领域强化',
+    skills:[
+      {name:'通灵·强化',cost:1,trig:2,target:'ally',desc:'队友+25%伤害2回合+1体力',
+        exec(me,t,G){B(t,G,'dmgBonus',0.25,2,'+25%通灵',me);t.stamina=Math.min(MAX_STA,t.stamina+1);L(G,`Zane SP 通灵强化！${t.name}+25%伤+1体力`,'special');}},
+      {name:'记忆封印',cost:2,trig:3,target:'enemy',desc:'目标触发值归零+沉默2回合',
+        exec(me,t,G){t.trigger=0;t.silenced=2;L(G,`Zane SP 封印记忆！${t.name}触发归零+沉默2回`,'special');}},
+      {name:'后山齐攻',cost:3,trig:4,target:'none',desc:'全体150%法术，后山兄弟在场每人+30%',
+        exec(me,t,G){
+          let backhill=['zane','harrison','lucas','vincent','edward_sp','zane_sp'];
+          let cnt=aliveAllies(me,G).filter(a=>backhill.includes(a.charId)).length;
+          let mult=1.5+cnt*0.3;
+          aliveEnemies(me,G).forEach(e=>D(me,e,G,mult*100,'magic'));
+          L(G,`Zane SP 后山齐攻！${Math.round(mult*100)}%法伤（后山×${cnt}）`,'special');}}
+    ],
+    ult:{name:'领域展开·后山兄弟之地',target:'none',desc:'全队+30%伤+15%HP，对全敌造成250%法伤+触发值-3',
+      exec(me,t,G){
+        aliveAllies(me,G).forEach(a=>{B(a,G,'dmgBonus',0.3,3,'+30%后山域',me);H(a,G,15,me);});
+        aliveEnemies(me,G).forEach(e=>{D(me,e,G,250,'magic');e.trigger=Math.max(0,e.trigger-3);});
+        L(G,'Zane SP 后山兄弟之地！全队增益+全敌250%！','ult');}},
+    recall:{name:'里香·真情告白',desc:'队友最低血量者满血复活，自身触发+5',
+      exec(me,t,G){
+        let lowest=aliveAllies(me,G).sort((a,b)=>a.hp-b.hp)[0];
+        if(lowest){lowest.hp=lowest.maxHP;L(G,`Zane SP 真情告白！${lowest.name}满血！`,'heal');}
+        me.trigger=Math.min(99,me.trigger+5);
+        L(G,'Zane SP 回想！触发+5','special');}},
+    passive:{desc:'后山兄弟同场：伤害+5%/人（最多+20%）',
+      onBattleStart(me,G){
+        let backhill=['zane','harrison','lucas','vincent','edward_sp'];
+        let cnt=myTeam(me,G).filter(a=>backhill.includes(a.charId)).length;
+        if(cnt>0){
+          me.buffs.push({type:'dmgBonus',val:cnt*0.05,dur:999,label:`+后山×${cnt}×5%`});
+          me.dmgBonus=(me.dmgBonus||0)+cnt*0.05;
+          L(G,`Zane SP 后山羁绊：+${cnt*5}%伤害`,'passive');
+        }
+      }}
+  }
+};
 for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
 
+// Addy immunity handled in original D() below
+
 const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
-const GZ_IDS=['miqie2','edward_sp','luoda','toma'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp'];
 let selectedCategory=null;
 
 // ═══════════════ GAME STATE ═══════════════
@@ -1210,35 +1390,57 @@ function executePlayerAction(actor,skillIdx,targetId){
     if(ch.onHit)ch.onHit(actor,target,G);
   }
   checkDeaths();
-  actQueueIdx++;
-  renderBattle();
-  promptNextPlayerAction();
+  if(AQ.q.length>0){
+    document.getElementById('action-content').innerHTML='<div class="anim-waiting">⚡ <span>判定进行中</span></div>';
+    AQ.run(()=>{
+      checkDeaths();
+      if(checkWin())return;
+      actQueueIdx++;
+      renderBattle();
+      promptNextPlayerAction();
+    });
+  } else {
+    actQueueIdx++;
+    renderBattle();
+    promptNextPlayerAction();
+  }
 }
 
 function runEnemyPhase(){
-  for(let enemy of G.enemyTeam){
-    if(enemy.isDead||enemy.isAbsent||enemy.stun>0)continue;
-    let {skillIdx,target}=aiChoose(enemy);
+  let enemies=G.enemyTeam.filter(e=>!e.isDead&&!e.isAbsent&&!(e.stun>0));
+  function nextEnemy(idx){
+    if(idx>=enemies.length){
+      [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+        if(!c.isDead){tickBuffs(c,G);if(c.silenced>0)c.silenced--;}
+      });
+      checkDeaths();
+      [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+        if(!c.isDead&&c.charId==='harrison'&&c.stamina<=0&&!c.isAbsent){
+          let ch=CHARS['harrison'];if(ch.passive&&ch.passive.onZeroStamina)ch.passive.onZeroStamina(c,G);
+        }
+      });
+      AQ.run(()=>{
+        if(checkWin())return;
+        G.round++;renderBattle();startRound();
+      });
+      return;
+    }
+    let enemy=enemies[idx];
+    let{skillIdx,target}=aiChoose(enemy);
     let ch=CHARS[enemy.charId];
     let isUlt=skillIdx==='ult';
     let skill=isUlt?ch.ult:ch.skills[skillIdx];
     if(isUlt){enemy.trigger=0;L(G,`★ [敌]${enemy.name} 大招：${skill.name}！`,'ult');skill.exec(enemy,target,G);}
     else{enemy.stamina-=skill.cost;enemy.trigger=Math.min(99,enemy.trigger+skill.trig);L(G,`[敌]${enemy.name} 使用：${skill.name}`,'normal');skill.exec(enemy,target,G);}
     checkDeaths();
-  }
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead){tickBuffs(c,G);if(c.silenced>0)c.silenced--;}
-  });
-  checkDeaths();
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead&&c.charId==='harrison'&&c.stamina<=0&&!c.isAbsent){
-      let ch=CHARS['harrison'];if(ch.passive&&ch.passive.onZeroStamina)ch.passive.onZeroStamina(c,G);
+    if(AQ.q.length>0){
+      renderBattle();
+      AQ.run(()=>{checkDeaths();nextEnemy(idx+1);});
+    } else {
+      nextEnemy(idx+1);
     }
-  });
-  if(checkWin())return;
-  G.round++;
-  renderBattle();
-  startRound();
+  }
+  nextEnemy(0);
 }
 
 function checkDeaths(){
@@ -1286,6 +1488,20 @@ function aiChoose(enemy){
     return{skillIdx:0,target:tgt};
   }
 
+  // 20% chance to use recall if available
+  if(!enemy.recallUsed&&Math.random()<0.2){
+    let ch_r=CHARS[enemy.charId];
+    if(ch_r.recall){
+      let sk_r=ch_r.recall;
+      let tgt=null;
+      if(sk_r.target==='enemy')tgt=pick(playerTargets);
+      else if(sk_r.target==='ally'){
+        let hurt=alive(myTeam(enemy,G)).sort((a,b)=>a.hp-b.hp)[0];
+        tgt=hurt||pick(alive(myTeam(enemy,G)));
+      }
+      return{skillIdx:'recall',target:tgt};
+    }
+  }
   // Check if healer with allies hurt
   let healers=['jeff','charlotte'];
   if(healers.includes(enemy.charId)){
@@ -1352,7 +1568,7 @@ function renderCombatant(c, isEnemy){
   let badge=ultReady&&!c.isDead?`<div class="trig-badge">ULT!</div>`:'';
   if(c.isAbsent&&!c.isDead)badge=`<div class="skip-badge">离场</div>`;
   
-  let cardBorder=isActing?'#5577ff':c.isDead?'var(--border)':c.rarity==='SSSR'?'#9933cc55':c.rarity==='SSR'?'#c8901833':'var(--border)';
+  let cardBorder=isActing?'var(--gold)':c.isDead?'var(--border)':c.rarity==='SSSR'?'rgba(176,80,255,.35)':c.rarity==='SSR'?'rgba(240,192,64,.25)':c.rarity==='SP'?'rgba(255,68,204,.3)':c.rarity==='AT'?'rgba(57,255,136,.3)':'var(--border)';
   return`<div class="${classes.join(' ')} c-rarity-${c.rarity}" style="border-color:${cardBorder};--card-color:${c.color}" onclick="handleCardClick('${c.id}')">
     <div class="c-header">
       <div class="c-nameblock">
@@ -1409,7 +1625,7 @@ function renderBattle(){
 
 function showSkillPanel(actor){
   let ch=CHARS[actor.charId];
-  let remaining=actQueue.length-actQueueIdx;
+  let remaining=actQueue.filter((_,i)=>i>=actQueueIdx).length;
   let html=`<div class="action-title">轮到你行动 <span class="action-char">${actor.name}</span> <span style="font-size:.58rem;color:var(--dim);font-family:'Share Tech Mono',monospace">（剩余 ${remaining} 人）</span></div>
   <div class="skill-buttons">`;
   ch.skills.forEach((sk,i)=>{
@@ -1515,17 +1731,25 @@ function toggleSelect(id,cat){
 
 function startBattle(){
   if(selectedIds.length!==4)return;
-  let pool=selectedCategory==='gz'?GZ_IDS:ORIG_IDS;
-  let remaining=[...ORIG_IDS,...GZ_IDS].filter(id=>!selectedIds.includes(id));
-  let enemyPool=remaining.length>=4?remaining:[...ORIG_IDS,...GZ_IDS].filter(id=>!selectedIds.includes(id));
-  let enemyIds=shuffle(enemyPool).slice(0,4);
+  let enemyIds;
+  if(selectedCategory==='gz'){
+    // GZ vs GZ mirror: enemy picks from GZ pool only
+    let avail=GZ_IDS.filter(id=>!selectedIds.includes(id));
+    // Allow repeats if not enough unique chars
+    let pool=[...avail];
+    while(pool.length<4)pool=[...pool,...GZ_IDS];
+    enemyIds=shuffle(pool).slice(0,4);
+  } else {
+    let remaining=ORIG_IDS.filter(id=>!selectedIds.includes(id));
+    enemyIds=shuffle(remaining).slice(0,4);
+  }
   initGame(selectedIds,enemyIds);
   showScreen('battle-screen');
   startRound();
 }
 
 function resetGame(){
-  selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';
+  selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';AQ.clear();
   renderSelectScreen();
   showScreen('select-screen');
 }
