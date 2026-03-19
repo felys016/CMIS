@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清迈国际格斗 ✦ Battle Simulator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#05050f;--bg1:#08081a;--bg2:#0d0d20;--bg3:#111128;
+  --border:#1e1e3a;--border2:#2a2a48;
+  --text:#c8d0f0;--muted:#5060880;--dim:#303050;
+  --gold:#d4a84b;--gold2:#f0c866;--purple:#b44fff;--purple2:#d080ff;
+  --blue:#4488ff;--red:#ff4455;--green:#44dd88;--teal:#33ccbb;
+  --rarity-SSR:#d4a84b;--rarity-SSSR:#b44fff;--rarity-SR:#7799bb;--rarity-R:#cc7744;
+}
+body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;font-size:15px}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── SELECT ─────────────────── */
+#select-screen{min-height:100vh;display:none;flex-direction:column}
+#select-screen.active{display:flex}
+.sel-header{padding:28px 24px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0a0a20 0%,var(--bg0) 100%)}
+.sel-title{font-size:2rem;font-weight:700;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;margin-bottom:2px}
+.sel-sub{font-size:.75rem;letter-spacing:.2em;color:var(--dim);font-family:'Share Tech Mono',monospace}
+.sel-body{flex:1;padding:16px 20px;overflow-y:auto}
+.char-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:960px;margin:0 auto}
+.char-card{border:1px solid var(--border);border-radius:10px;padding:12px 10px;cursor:pointer;transition:all .18s;position:relative;background:var(--bg2);user-select:none;overflow:hidden}
+.char-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .18s;background:radial-gradient(circle at 50% 0%,var(--card-color,#4488ff)22,transparent 70%)}
+.char-card:hover{transform:translateY(-3px);border-color:var(--border2)}
+.char-card:hover::before{opacity:1}
+.char-card.selected{border-color:var(--card-color,#4488ff);background:var(--bg3)}
+.char-card.selected::before{opacity:.7}
+.char-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:.8rem;color:#44ee88;font-weight:700}
+.char-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--card-color,#4488ff);margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--card-color,#4488ff);background:var(--bg1)}
+.char-name{font-size:.9rem;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-rarity-tag{display:inline-block;font-size:.55rem;letter-spacing:.12em;padding:2px 6px;border-radius:4px;margin:4px 0;border:1px solid;font-family:'Share Tech Mono',monospace}
+.rarity-SSR .char-rarity-tag{color:var(--rarity-SSR);border-color:#d4a84b44;background:#1a1000}
+.rarity-SSSR .char-rarity-tag{color:var(--rarity-SSSR);border-color:#b44fff44;background:#180020}
+.rarity-SR .char-rarity-tag{color:var(--rarity-SR);border-color:#7799bb44;background:#0a1018}
+.rarity-R .char-rarity-tag{color:var(--rarity-R);border-color:#cc774444;background:#181008}
+.char-desc{font-size:.62rem;color:#506080;margin-top:3px;line-height:1.3}
+.char-faction{font-size:.55rem;color:#445;margin-top:2px}
+.sel-footer{padding:14px 20px;border-top:1px solid var(--border);background:var(--bg1);display:flex;align-items:center;justify-content:space-between}
+.sel-count{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--dim)}
+.sel-count span{color:var(--gold)}
+.pip-track{display:flex;gap:6px;align-items:center}
+.sel-pip{width:10px;height:10px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);transition:all .2s}
+.sel-pip.filled{background:var(--gold);border-color:var(--gold2);box-shadow:0 0 6px var(--gold)}
+
+/* ── BUTTONS ─────────────────── */
+.btn{background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 22px;border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .15s;letter-spacing:.08em;font-family:'Rajdhani',sans-serif;font-weight:500}
+.btn:hover{background:var(--bg3);border-color:#3a3a60}
+.btn:disabled{opacity:.25;cursor:not-allowed}
+.btn-primary{background:#131d3a;border-color:#3355bb;color:#88aaff}
+.btn-primary:hover:not(:disabled){background:#1a2850;border-color:#5577dd}
+.btn-go{background:#1a1000;border-color:var(--gold);color:var(--gold);padding:10px 32px;font-size:1rem;font-weight:700;letter-spacing:.15em}
+.btn-go:hover:not(:disabled){background:#251800;border-color:var(--gold2);box-shadow:0 0 12px #d4a84b44}
+.btn-danger{background:#1e0808;border-color:#662222;color:#ff8888;padding:5px 14px;font-size:.75rem}
+.btn-danger:hover{background:#2a0a0a;border-color:#993333}
+
+/* ── BATTLE SCREEN ─────────────────── */
+#battle-screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#battle-screen.active{display:flex}
+.battle-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
+.round-badge{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--gold);background:#1a1000;border:1px solid #3a2800;padding:4px 12px;border-radius:5px;letter-spacing:.1em}
+.hdr-title{font-size:.7rem;letter-spacing:.3em;color:var(--dim);font-weight:400}
+
+.teams-wrapper{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.team-section{padding:8px 12px}
+.team-label{font-size:.6rem;letter-spacing:.25em;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.team-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.combatant-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+.combatant-card{border:1px solid var(--border);border-radius:10px;padding:9px;background:var(--bg2);position:relative;transition:border-color .2s,box-shadow .2s,opacity .2s;min-height:118px;overflow:hidden}
+.combatant-card::before{content:'';position:absolute;inset:0;opacity:.04;background:var(--card-color,#fff)}
+.combatant-card.is-active{border-color:#5577ff;box-shadow:0 0 14px #5577ff33;background:var(--bg3)}
+.combatant-card.is-target-mode{cursor:pointer;border-style:dashed}
+.combatant-card.is-target-mode:hover{border-color:#ffaa44;box-shadow:0 0 10px #ffaa4433;border-style:solid}
+.combatant-card.is-dead{opacity:.28;filter:grayscale(1) brightness(.6)}
+.combatant-card.is-absent{opacity:.45;border-style:dashed}
+.combatant-card.is-stunned{border-color:#cc3333!important;box-shadow:0 0 6px #cc333333!important}
+
+.c-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.c-nameblock{}
+.c-name{font-size:.78rem;font-weight:600;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px}
+.c-rarity-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px}
+.c-rarity-label{font-size:.52rem;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;vertical-align:middle}
+.c-rarity-SSR .c-rarity-dot{background:var(--rarity-SSR);box-shadow:0 0 4px var(--rarity-SSR)}
+.c-rarity-SSR .c-rarity-label{color:var(--rarity-SSR)}
+.c-rarity-SSSR .c-rarity-dot{background:var(--rarity-SSSR);box-shadow:0 0 4px var(--rarity-SSSR)}
+.c-rarity-SSSR .c-rarity-label{color:var(--rarity-SSSR)}
+.c-rarity-SR .c-rarity-dot{background:var(--rarity-SR)}
+.c-rarity-SR .c-rarity-label{color:var(--rarity-SR)}
+.c-rarity-R .c-rarity-dot{background:var(--rarity-R)}
+.c-rarity-R .c-rarity-label{color:var(--rarity-R)}
+.c-badges{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.trig-badge{font-size:.5rem;background:#1a1000;color:var(--gold);padding:2px 5px;border-radius:4px;border:1px solid #aa7700;letter-spacing:.05em;animation:gpulse .7s ease-in-out infinite alternate}
+.skip-badge{font-size:.5rem;background:#200000;color:#ff7777;padding:2px 5px;border-radius:4px;border:1px solid #661111}
+@keyframes gpulse{from{opacity:.7;box-shadow:none}to{opacity:1;box-shadow:0 0 6px #d4a84b88}}
+
+.bar-row{margin-top:4px}
+.bar-label{font-size:.5rem;color:#404060;font-family:'Share Tech Mono',monospace;margin-bottom:2px;display:flex;justify-content:space-between}
+.bar-track{background:#07070f;border-radius:3px;height:5px;overflow:visible;position:relative;border:1px solid #16162a}
+.bar-fill{height:100%;border-radius:2px;transition:width .35s ease}
+.hp-fill{background:linear-gradient(90deg,#dd3333 0%,#ff7722 50%,#ddcc22 100%)}
+.shield-fill{background:linear-gradient(90deg,#1144bb,#33aaff)}
+.trig-fill{background:linear-gradient(90deg,#006666,#00ddcc)}
+
+.sta-row{display:flex;gap:3px;margin-top:5px;align-items:center}
+.sta-label{font-size:.48rem;color:var(--dim);font-family:'Share Tech Mono',monospace;margin-right:2px}
+.pip{width:8px;height:8px;border-radius:50%;background:#101020;border:1px solid #1e1e38;transition:all .2s}
+.pip.filled{background:#c8941a;border-color:var(--gold);box-shadow:0 0 4px #d4a84b66}
+
+.status-tags{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px;min-height:12px}
+.tag{font-size:.48rem;padding:1px 4px;border-radius:3px;border:1px solid;letter-spacing:.04em;font-family:'Share Tech Mono',monospace}
+.tag-buff{color:#66ffaa;border-color:#225544;background:#0a1a0e}
+.tag-debuff{color:#ff7766;border-color:#553322;background:#180a08}
+.tag-special{color:#99bbff;border-color:#223355;background:#080f1a}
+
+/* ── LOG ─────────────────── */
+.log-section{background:#060610;border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:148px;overflow-y:auto;padding:7px 14px;font-size:.68rem;line-height:1.7;font-family:'Share Tech Mono',monospace;flex-shrink:0}
+.log-section::-webkit-scrollbar{width:3px}
+.log-section::-webkit-scrollbar-thumb{background:#222240;border-radius:2px}
+.log-entry{padding:0}
+.log-round-sep{color:var(--dim);border-top:1px solid #111124;margin:3px 0 1px;padding-top:3px;font-size:.58rem}
+.log-damage{color:#ff7777}
+.log-headshot{color:#ffdd44;font-weight:bold}
+.log-heal{color:#44ee88}
+.log-buff{color:#77aaff}
+.log-debuff{color:#ff9944}
+.log-passive{color:#bb77ff;font-style:italic}
+.log-special{color:#ffeebb}
+.log-truedmg{color:#ff4444;font-weight:bold}
+.log-dodge{color:#5566880;font-style:italic;color:#556688}
+.log-ult{color:#f0c866;background:#151000;padding:0 4px;border-radius:2px;border-left:2px solid var(--gold)}
+.log-dot{color:#cc5533}
+.log-death{color:#ff3344;font-weight:bold}
+.log-normal{color:#485870}
+.log-win{color:var(--gold);font-size:.8rem;text-align:center;padding:3px 0}
+
+/* ── ACTION PANEL ─────────────────── */
+.action-panel{padding:10px 14px 12px;background:var(--bg1);border-top:1px solid var(--border);flex-shrink:0;min-height:118px}
+.action-title{font-size:.62rem;letter-spacing:.18em;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.action-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.action-char{color:#aabcee;font-weight:600;font-size:.9rem;font-family:'Rajdhani',sans-serif;letter-spacing:.05em}
+.skill-buttons{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.skill-buttons::-webkit-scrollbar{height:3px}
+.skill-buttons::-webkit-scrollbar-thumb{background:#222240}
+.skill-btn{border:1px solid var(--border2);background:var(--bg2);color:var(--text);padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:'Rajdhani',sans-serif}
+.skill-btn:hover:not(:disabled){background:var(--bg3);border-color:#404070;transform:translateY(-2px);box-shadow:0 4px 12px #00000088}
+.skill-btn:disabled{opacity:.25;cursor:not-allowed;transform:none}
+.skill-btn.ult-btn{border-color:#3a2800;background:#0f0a00}
+.skill-btn.ult-btn:not(:disabled){border-color:#886600;background:#161000;box-shadow:0 0 8px #d4a84b22}
+.skill-btn.ult-btn:hover:not(:disabled){background:#1e1800;border-color:var(--gold);box-shadow:0 4px 14px #d4a84b44;transform:translateY(-2px)}
+.skill-name{font-weight:600;margin-bottom:2px;font-size:.72rem;letter-spacing:.02em}
+.skill-meta{font-size:.56rem;color:#405070;margin-bottom:2px;font-family:'Share Tech Mono',monospace}
+.skill-desc{font-size:.59rem;color:#506070;line-height:1.3}
+.ult-icon{display:inline-block;width:12px;height:12px;background:var(--gold);border-radius:50%;margin-right:4px;vertical-align:middle;font-size:.5rem;line-height:12px;text-align:center;color:#000;font-weight:700}
+.execute-area{display:flex;gap:10px;align-items:center;margin-top:8px}
+.execute-hint{font-size:.65rem;color:var(--dim);font-family:'Share Tech Mono',monospace}
+.target-hint{color:#ffaa44;font-size:.7rem;margin-top:6px;font-family:'Share Tech Mono',monospace;animation:gpulse 1s ease-in-out infinite alternate;padding:4px 8px;background:#1a0d00;border:1px solid #5a3300;border-radius:5px;display:inline-block}
+
+/* ── END SCREEN ─────────────────── */
+#end-screen{display:none;align-items:center;justify-content:center;min-height:100vh}
+#end-screen.active{display:flex}
+.end-inner{text-align:center;padding:60px 40px}
+.end-title{font-size:3.5rem;font-weight:700;letter-spacing:.3em;margin-bottom:10px;text-transform:uppercase}
+.end-title.victory{color:var(--gold);text-shadow:0 0 30px #d4a84b66,0 0 60px #d4a84b22}
+.end-title.defeat{color:var(--red);text-shadow:0 0 30px #ff445566}
+.end-sub{color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:.8rem;margin-bottom:8px}
+.end-round{color:#445566;font-size:.7rem;font-family:'Share Tech Mono',monospace;margin-bottom:32px}
+.end-deco{font-size:3rem;margin-bottom:20px;opacity:.4}
+</style>
+</head>
+<body>
+
+<!-- SELECT SCREEN -->
+<div id="select-screen" class="screen active">
+  <div class="sel-header">
+    <div class="sel-title">清迈国际格斗</div>
+    <div class="sel-sub">CHIANG MAI INTERNATIONAL FIGHTING ✦ BATTLE SIMULATOR v1.0</div>
+  </div>
+  <div class="sel-body">
+    <div class="char-grid" id="char-grid"></div>
+  </div>
+  <div class="sel-footer">
+    <div>
+      <div class="sel-count">选择 4 名角色 &nbsp;·&nbsp; <span id="sel-n">0</span>/4 已选</div>
+      <div class="pip-track" style="margin-top:6px">
+        <div class="sel-pip" id="pip0"></div><div class="sel-pip" id="pip1"></div>
+        <div class="sel-pip" id="pip2"></div><div class="sel-pip" id="pip3"></div>
+      </div>
+    </div>
+    <button class="btn btn-go" id="start-btn" disabled onclick="startBattle()">开始战斗 ▶</button>
+  </div>
+</div>
+
+<!-- BATTLE SCREEN -->
+<div id="battle-screen" class="screen">
+  <div class="battle-header">
+    <div class="round-badge" id="round-label">⚔ ROUND 1</div>
+    <div class="hdr-title">清迈国际格斗</div>
+    <button class="btn btn-danger" onclick="resetGame()">重置</button>
+  </div>
+  <div class="teams-wrapper">
+    <div class="team-section">
+      <div class="team-label" style="color:#cc4455">ENEMY</div>
+      <div class="combatant-row" id="enemy-row"></div>
+    </div>
+    <div class="log-section" id="battle-log"></div>
+    <div class="team-section">
+      <div class="team-label" style="color:#4488cc">PLAYER</div>
+      <div class="combatant-row" id="player-row"></div>
+    </div>
+  </div>
+  <div class="action-panel" id="action-panel">
+    <div class="action-title">ACTION</div>
+    <div id="action-content">准备中...</div>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen" class="screen">
+  <div class="end-inner">
+    <div class="end-deco" id="end-deco">✦</div>
+    <div class="end-title" id="end-title">VICTORY</div>
+    <div class="end-sub" id="end-subtitle"></div>
+    <div class="end-round" id="end-round"></div>
+    <button class="btn btn-go" onclick="resetGame()">再来一局 ▶</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════ CONSTANTS ═══════════════
+const BASE_DMG = 100, MAX_HP = 1000, START_STA = 5, MAX_STA = 8, STA_REGEN = 2, TRIG_ULT = 10;
+const DODGE_RATE = 0.10, HS_RATE = 0.10, HS_MULT = 1.5;
+
+// ═══════════════ HELPERS ═══════════════
+const rng = n => Math.floor(Math.random() * n);
+const ri = n => Math.floor(Math.random() * n);
+const roll = p => Math.random() < p;
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=ri(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+function pick(a){return a[ri(a.length)];}
+function alive(a){return a.filter(c=>!c.isDead&&!c.isAbsent);}
+function myTeam(c,G){return c.isPlayer?G.playerTeam:G.enemyTeam;}
+function enemies(c,G){return c.isPlayer?G.enemyTeam:G.playerTeam;}
+function aliveEnemies(c,G){return alive(enemies(c,G));}
+function aliveAllies(c,G){return alive(myTeam(c,G));}
+
+function L(G,msg,type='normal'){G.log.push({msg,type,round:G.round});}
+
+function D(src,tgt,G,pct,type='body'){
+  if(!tgt||tgt.isDead||tgt.isAbsent)return 0;
+  if(roll(DODGE_RATE)){L(G,`${tgt.name} 躲开了 ${src.name} 的攻击！`,'dodge');return 0;}
+  let d=BASE_DMG*pct/100;
+  d*=(1+(src.dmgBonus||0));
+  if(type==='body')d*=(1+(src.atkBonus||0));
+  d*=(1+(tgt.vuln||0));
+  if(type==='magic')d*=(1+(tgt.magicVuln||0));
+  let hs=roll(HS_RATE);
+  if(hs)d*=HS_MULT;
+  d=Math.round(d);
+  let actual=applyDmg(tgt,d);
+  let msg=`${src.name} → ${tgt.name}: ${d}${type==='body'?'体':'法'} dmg${hs?' 💥爆头!':''}`;
+  if(actual<d)msg+=` (护盾减伤)`;
+  if(tgt.isDead)msg+=` ☠`;
+  L(G,msg,hs?'headshot':'damage');
+  return d;
+}
+
+function applyDmg(tgt,d){
+  if(tgt.shield>0){
+    let eff=Math.floor(d/2);
+    if(tgt.shield>=eff){tgt.shield-=eff;return 0;}
+    else{let o=eff-tgt.shield;tgt.shield=0;tgt.hp=Math.max(0,tgt.hp-o);if(tgt.hp<=0)tgt.isDead=true;return o;}
+  }
+  tgt.hp=Math.max(0,tgt.hp-d);
+  if(tgt.hp<=0)tgt.isDead=true;
+  return d;
+}
+
+function TD(src,tgt,G,pct){
+  if(!tgt||tgt.isDead||tgt.isAbsent)return 0;
+  let d=Math.round(tgt.maxHP*pct/100);
+  tgt.hp=Math.max(0,tgt.hp-d);
+  if(tgt.hp<=0)tgt.isDead=true;
+  L(G,`${src.name} → ${tgt.name}: ${d} 真实伤害${tgt.isDead?' ☠':''}`,'truedmg');
+  return d;
+}
+
+function H(tgt,G,pct,src){
+  if(!tgt||tgt.isDead)return 0;
+  let h=Math.round(tgt.maxHP*pct/100);
+  let before=tgt.hp;
+  tgt.hp=Math.min(tgt.maxHP,tgt.hp+h);
+  let got=tgt.hp-before,ov=h-got;
+  if(ov>0)tgt.shield+=ov;
+  L(G,`${src?src.name+' → ':''}${tgt.name}: +${got} HP${ov>0?` (+${ov} 护盾)`:''}`,'heal');
+  return got;
+}
+
+function SH(tgt,G,amt,src){
+  if(!tgt||tgt.isDead)return;
+  tgt.shield+=amt;
+  if(src)L(G,`${src.name} → ${tgt.name}: +${amt} 护盾`,'buff');
+}
+
+function B(tgt,G,type,val,dur,label,src){
+  if(!tgt||tgt.isDead)return;
+  tgt.buffs.push({type,val,dur,label});
+  recomputeStats(tgt);
+  L(G,`${src?src.name+' → ':''}${tgt.name}: ${label} [${dur}r]`,type.includes('vuln')||type.includes('Reduction')||type==='stun'?'debuff':'buff');
+}
+
+function ST(tgt,G,rounds,src){
+  if(!tgt||tgt.isDead)return;
+  tgt.stun=Math.max(tgt.stun||0,rounds);
+  L(G,`${tgt.name} 被眩晕 ${rounds} 回合！`,'debuff');
+}
+
+function recomputeStats(c){
+  c.dmgBonus=0;c.atkBonus=0;c.dmgReduction=0;c.vuln=0;c.magicVuln=0;c.bonusSta=0;
+  for(let b of c.buffs){
+    if(b.type==='dmgBonus')c.dmgBonus+=b.val;
+    if(b.type==='atkBonus')c.atkBonus+=b.val;
+    if(b.type==='dmgReduction')c.dmgReduction+=b.val;
+    if(b.type==='vuln')c.vuln+=b.val;
+    if(b.type==='magicVuln')c.magicVuln+=b.val;
+    if(b.type==='bonusSta')c.bonusSta+=b.val;
+  }
+}
+
+function tickBuffs(c,G){
+  let dot=0;
+  c.buffs=c.buffs.filter(b=>{
+    if(b.type==='dot')dot+=b.val;
+    b.dur--;
+    return b.dur>0;
+  });
+  recomputeStats(c);
+  if(dot>0){
+    let d=Math.round(BASE_DMG*dot/100);
+    c.hp=Math.max(0,c.hp-d);
+    if(c.hp<=0)c.isDead=true;
+    L(G,`${c.name} 持续伤害 ${d}${c.isDead?' ☠':''}`,'dot');
+  }
+  if(c.stun>0)c.stun--;
+  if(c.betray>0)c.betray--;
+}
+
+// ═══════════════ CHARACTER DATA ═══════════════
+const CHARS = {
+  zane:{
+    id:'zane',name:'Zane',rarity:'SSR',color:'#4e7fff',faction:['后山兄弟'],desc:'通灵召唤/强化',
+    skills:[
+      {name:'psh psh psh',cost:1,trig:2,target:'enemy',desc:'95% 体术伤害',
+        exec(me,t,G){D(me,t,G,95,'body');}},
+      {name:'代数 Aura',cost:2,trig:3,target:'none',desc:'全队+20%伤害2回合，自身回10%HP',
+        exec(me,t,G){aliveAllies(me,G).forEach(a=>B(a,G,'dmgBonus',0.2,2,'+20%DMG',me));H(me,G,10,me);}},
+      {name:'通灵·后山兄弟',cost:4,trig:4,target:'enemy',desc:'随机召唤后山兄弟攻击',
+        exec(me,t,G){
+          let r=rng(3);
+          if(r===0){L(G,`Lucas附身！`,'special');D(me,t,G,150,'magic');}
+          else if(r===1){L(G,`Vincent附身！`,'special');D(me,t,G,200,'body');}
+          else{L(G,`Harrison附身！`,'special');D(me,t,G,120,'body');}
+        }}
+    ],
+    ult:{name:'通灵·里香',target:'none',desc:'随机2名敌人各200-500%法术',
+      exec(me,t,G){
+        let es=aliveEnemies(me,G);shuffle(es).slice(0,2).forEach(e=>D(me,e,G,200+ri(301),'magic'));
+      }},
+    passive:{desc:'每5回合离场1回合，归来+2触发+2体力',
+      tick(me,G){
+        me._pc=(me._pc||0)+1;
+        if(me._pc>0&&me._pc%5===0&&!me.isAbsent){
+          me.isAbsent=true;me.absentTimer=1;
+          L(G,`${me.name} 被动：下场1回合`,'passive');
+        }
+      },
+      onReturn(me,G){
+        me.trigger=Math.min(99,me.trigger+2);me.stamina=Math.min(MAX_STA,me.stamina+2);
+        L(G,`${me.name} 回场！ +2触发 +2体力`,'passive');
+      }}
+  },
+
+  harrison:{
+    id:'harrison',name:'Harrison',rarity:'SSR',color:'#cc4444',faction:['后山兄弟'],desc:'攻击/掠夺',
+    skills:[
+      {name:'大急拔跳投',cost:1,trig:2,target:'enemy',desc:'120% 体术伤害',
+        exec(me,t,G){D(me,t,G,120,'body');}},
+      {name:'掠夺',cost:4,trig:3,target:'enemy',desc:'掠夺敌方，永久+8%伤害',
+        exec(me,t,G){
+          D(me,t,G,80,'body');
+          me.dmgBonus=(me.dmgBonus||0)+0.08;
+          me.buffs.push({type:'dmgBonus',val:0.08,dur:999,label:'+8%DMG(永久)'});
+          L(G,`${me.name} 掠夺！永久+8%伤害`,'special');
+        }},
+      {name:'万鞋登台',cost:4,trig:4,target:'none',desc:'全员10%真伤+随机眩晕1人',
+        exec(me,t,G){
+          aliveEnemies(me,G).forEach(e=>TD(me,e,G,10));
+          let targets=aliveEnemies(me,G);
+          if(targets.length){ST(pick(targets),G,1,me);}
+        }}
+    ],
+    ult:{name:'钢铁血肘',target:'enemy',desc:'200%体术，35%继续→120%体术（最多5次）',
+      exec(me,t,G){
+        D(me,t,G,200,'body');
+        let hits=1;
+        while(hits<5&&roll(0.35)&&!t.isDead){D(me,t,G,120,'body');hits++;}
+        if(hits>1)L(G,`Harrison连续肘击 ${hits} 次！`,'special');
+      }},
+    passive:{desc:'后山兄弟每在场1人+5%伤害；体力耗尽→离场2回合归来+4体力',
+      onBattleStart(me,G){
+        let team=myTeam(me,G);
+        let cnt=team.filter(c=>c.faction&&c.faction.includes('后山兄弟')&&c.id!==me.id).length;
+        if(cnt>0){
+          me.dmgBonus=(me.dmgBonus||0)+cnt*0.05;
+          me.buffs.push({type:'dmgBonus',val:cnt*0.05,dur:999,label:`+后山×${cnt}×5%DMG`});
+          L(G,`${me.name} 后山羁绊：+${cnt*5}%伤害`,'passive');
+        }
+      },
+      onZeroStamina(me,G){
+        me.isAbsent=true;me.absentTimer=2;
+        L(G,`${me.name} 体力耗尽！离场2回合`,'passive');
+      },
+      onReturn(me,G){
+        me.stamina=Math.min(MAX_STA,me.stamina+4);
+        L(G,`${me.name} 归场！+4体力`,'passive');
+      }}
+  },
+
+  charlotte:{
+    id:'charlotte',name:'Charlotte',rarity:'SR',color:'#ff88aa',faction:[],desc:'治疗/强化',
+    skills:[
+      {name:'复刻',cost:1,trig:2,target:'ally',desc:'为队友提供庇护并小幅治疗',
+        exec(me,t,G){H(t,G,12,me);B(t,G,'dmgBonus',0.1,2,'+10%DMG',me);}},
+      {name:'加油',cost:2,trig:3,target:'ally',desc:'目标+20%攻击2回合',
+        exec(me,t,G){B(t,G,'atkBonus',0.2,2,'+20%攻击',me);}},
+      {name:'体力分发',cost:3,trig:4,target:'none',desc:'全队+1体力/回合 共3回合',
+        exec(me,t,G){aliveAllies(me,G).forEach(a=>B(a,G,'bonusSta',1,3,'+1体力/r',me));}}
+    ],
+    ult:{name:'双人转',target:'none',desc:'与Zane联袂，全敌持续50%伤害3回合',
+      exec(me,t,G){
+        let zane=aliveAllies(me,G).find(c=>c.charId==='zane');
+        if(!zane){L(G,`需要Zane在场！(仍可发动弱化版)`,'debuff');}
+        let mult=zane?1:0.5;
+        aliveEnemies(me,G).forEach(e=>B(e,G,'dot',50*mult,3,`双人转DoT`,me));
+        L(G,`${me.name} 双人转！${zane?'满威力':'半威力'}`,'special');
+      }},
+    passive:{desc:'与Zane同场：双方+20%最大HP+20%伤害',
+      onBattleStart(me,G){
+        let zane=myTeam(me,G).find(c=>c.charId==='zane');
+        if(zane){
+          [me,zane].forEach(c=>{
+            c.maxHP=Math.round(c.maxHP*1.2);c.hp=c.maxHP;
+            c.buffs.push({type:'dmgBonus',val:0.2,dur:999,label:'+20%DMG(羁绊)'});
+            c.dmgBonus=(c.dmgBonus||0)+0.2;
+          });
+          L(G,`Charlotte×Zane 羁绊：双方+20%HP+20%DMG`,'passive');
+        }
+      }}
+  },
+
+  lucas:{
+    id:'lucas',name:'Lucas',rarity:'SSR',color:'#44aaff',faction:['后山兄弟'],desc:'咒言爆发/控制',
+    skills:[
+      {name:'考试99→101',cost:1,trig:2,target:'enemy',desc:'101%法术 +0.9 GPA',
+        exec(me,t,G){D(me,t,G,101,'magic');me.gpa=(me.gpa||0)+0.9;L(G,`GPA→${(me.gpa||0).toFixed(1)}`,'special');}},
+      {name:'AP Precal Pro',cost:2,trig:3,target:'none',desc:'下次技能效果×1.5',
+        exec(me,t,G){me.enhanced=true;L(G,`${me.name} 强化：下次技能×1.5！`,'buff');}},
+      {name:'打不打使命',cost:4,trig:4,target:'none',desc:'200%体术全体+50%法术DoT+随机眩晕+1%即死',
+        exec(me,t,G){
+          let mult=me.enhanced?1.5:1;me.enhanced=false;
+          let es=aliveEnemies(me,G);
+          es.forEach(e=>{
+            D(me,e,G,200*mult,'body');
+            if(!e.isDead)B(e,G,'dot',50*mult,4,'法术DoT',me);
+            if(!e.isDead&&roll(0.01)){e.hp=0;e.isDead=true;L(G,`${e.name} 被咒言即死！！`,'death');}
+          });
+          let alive_e=aliveEnemies(me,G);
+          if(alive_e.length)ST(pick(alive_e),G,1,me);
+        }}
+    ],
+    ult:{name:'领域展开·Arcaea',target:'none',desc:`350%法术全体（GPA加成）`,
+      exec(me,t,G){
+        let bonus=Math.floor((me.gpa||0)*10);
+        aliveEnemies(me,G).forEach(e=>D(me,e,G,350+bonus,'magic'));
+        L(G,`Arcaea！GPA ${(me.gpa||0).toFixed(1)} → 额外+${bonus}%`,'ult');
+      }},
+    passive:{desc:'累积GPA提升Arcaea威力',tick(){}}
+  },
+
+  vincent:{
+    id:'vincent',name:'Vincent',rarity:'SR',color:'#ff8844',faction:['后山兄弟'],desc:'力量攻击',
+    skills:[
+      {name:'出拳',cost:1,trig:2,target:'enemy',desc:'100% 体术伤害',
+        exec(me,t,G){D(me,t,G,100,'body');}},
+      {name:'扫堂腿',cost:3,trig:3,target:'enemy',desc:'165% 体术伤害',
+        exec(me,t,G){D(me,t,G,165,'body');}},
+      {name:'公主抱摔',cost:3,trig:4,target:'enemy',desc:'150%体术，75%概率额外+30%',
+        exec(me,t,G){
+          D(me,t,G,150,'body');
+          if(roll(0.75)&&!t.isDead){D(me,t,G,30,'body');L(G,`Vincent 抱摔！追加击打！`,'special');}
+        }}
+    ],
+    ult:{name:'领域展开·掰手腕',target:'none',desc:'90%敌方输→120%法全体，9.75%敌胜→取消，0.25%即死',
+      exec(me,t,G){
+        let r=Math.random();
+        if(r<0.9025){aliveEnemies(me,G).forEach(e=>D(me,e,G,120,'magic'));L(G,`Vincent 掰手腕！全敌失败！`,'ult');}
+        else if(r<0.9975){L(G,`${me.name} 掰手腕失败！领域解除！`,'debuff');}
+        else{let es=aliveEnemies(me,G);if(es.length){let t2=pick(es);t2.hp=0;t2.isDead=true;L(G,`${t2.name} 抽筋暴毙！！`,'death');}}
+      }},
+    passive:{desc:'后山兄弟羁绊',tick(){}}
+  },
+
+  jake:{
+    id:'jake',name:'Jake',rarity:'SSR',color:'#88cc44',faction:[],desc:'狙击/爆头专家',
+    skills:[
+      {name:'pshpshpsh三连',cost:1,trig:2,target:'enemy',desc:'20%+35%+45% 体术三段',
+        exec(me,t,G){[20,35,45].forEach(p=>{if(!t.isDead)D(me,t,G,p,'body');});}},
+      {name:'I Am a Model',cost:2,trig:3,target:'none',desc:'自身下回合+30%攻击',
+        exec(me,t,G){B(me,G,'atkBonus',0.3,2,'+30%攻击',me);}},
+      {name:'超远三分',cost:3,trig:4,target:'enemy',desc:'必定爆头225%法术（无视躲避）',
+        exec(me,t,G){
+          let d=Math.round(BASE_DMG*2.25*(1+(me.dmgBonus||0))*(1+(me.atkBonus||0))*HS_MULT);
+          applyDmg(t,d);
+          L(G,`${me.name} 超远三分 💥爆头！${d} 法术${t.isDead?' ☠':''}`,'headshot');
+        }}
+    ],
+    ult:{name:'丝滑连招',target:'none',desc:'3-4次三分，每次45%体+45%法全体',
+      exec(me,t,G){
+        let shots=3+ri(2);
+        for(let i=0;i<shots;i++){
+          if(roll(0.5)){
+            aliveEnemies(me,G).forEach(e=>{D(me,e,G,45,'body');if(!e.isDead)D(me,e,G,45,'magic');});
+            L(G,`Jake 三分命中！(${i+1}/${shots})`,'ult');
+          }else{L(G,`Jake 三分偏出 (${i+1}/${shots})`,'dodge');}
+        }
+      }},
+    passive:{desc:'爆头专家',tick(){}}
+  },
+
+  cici:{
+    id:'cici',name:'Cici',rarity:'SR',color:'#ff44cc',faction:[],desc:'弱化/控制',
+    skills:[
+      {name:'反手拳',cost:1,trig:2,target:'enemy',desc:'70% 体术伤害',
+        exec(me,t,G){D(me,t,G,70,'body');}},
+      {name:'一万IQ',cost:2,trig:3,target:'enemy',desc:'眩晕1回合+夺1体力',
+        exec(me,t,G){
+          D(me,t,G,50,'magic');ST(t,G,1,me);
+          if(t.stamina>0){t.stamina--;me.stamina=Math.min(MAX_STA,me.stamina+1);L(G,`Cici 夺取1体力！`,'special');}
+        }},
+      {name:'西西组合技',cost:4,trig:4,target:'enemy',desc:'5连击，全中则眩晕',
+        exec(me,t,G){
+          let allHit=true;
+          for(let i=0;i<5;i++){
+            if(roll(0.8)&&!t.isDead){D(me,t,G,25,'body');}
+            else{allHit=false;}
+          }
+          if(allHit&&!t.isDead){ST(t,G,1,me);L(G,`全中！${t.name} 被眩晕！`,'special');}
+        }}
+    ],
+    ult:{name:'式神·Feliz+LJ',target:'none',desc:'召唤Feliz+LJ联合攻击全体',
+      exec(me,t,G){
+        aliveEnemies(me,G).forEach(e=>{
+          D(me,e,G,90,'magic');
+          if(!e.isDead)D(me,e,G,180,'magic');
+        });
+        L(G,`Cici召唤式神！Feliz+LJ双重攻击！`,'ult');
+      }},
+    passive:{desc:'IQ压制',tick(){}}
+  },
+
+  feliz:{
+    id:'feliz',name:'Feliz',rarity:'R',color:'#aaddff',faction:[],desc:'弱化/强化',
+    skills:[
+      {name:'出拳',cost:1,trig:2,target:'enemy',desc:'70% 体术伤害',
+        exec(me,t,G){D(me,t,G,70,'body');}},
+      {name:'Youtuber Aura',cost:2,trig:3,target:'ally',desc:'目标受伤-50% 1回合',
+        exec(me,t,G){B(t,G,'dmgReduction',0.5,1,'-50%受伤',me);}},
+      {name:'Bunny Hop',cost:3,trig:4,target:'none',desc:'全队+1体力+受伤-10% 2回合',
+        exec(me,t,G){
+          aliveAllies(me,G).forEach(a=>{
+            a.stamina=Math.min(MAX_STA,a.stamina+1);
+            B(a,G,'dmgReduction',0.1,2,'-10%受伤',me);
+          });
+        }}
+    ],
+    ult:{name:'通灵·大黑',target:'none',desc:'随机2名敌人各140%法术',
+      exec(me,t,G){
+        shuffle(aliveEnemies(me,G)).slice(0,2).forEach(e=>D(me,e,G,140,'magic'));
+        L(G,`Feliz 召唤大黑！`,'ult');
+      }},
+    passive:{desc:'第4回合后每回合30%概率离场1回合',
+      tick(me,G){
+        if(G.round>4&&!me.isAbsent&&roll(0.30)){
+          me.isAbsent=true;me.absentTimer=1;
+          L(G,`${me.name} 一个人溜走了...`,'passive');
+        }
+      },
+      onReturn(me,G){L(G,`${me.name} 回来了`,'passive');}}
+  },
+
+  michelle:{
+    id:'michelle',name:'Michelle',rarity:'SSR',color:'#ffdd44',faction:[],desc:'弱化/钞能力',
+    skills:[
+      {name:'数学天才',cost:2,trig:2,target:'enemy',desc:'目标下回合只能用一技能',
+        exec(me,t,G){t.silenced=2;L(G,`${t.name} 被限制！下2回合只能用一技能！`,'debuff');}},
+      {name:'钞能力',cost:3,trig:3,target:'enemy',desc:'目标下回合攻击自己人',
+        exec(me,t,G){t.betray=1;L(G,`${t.name} 被收买！下回合攻击自己队友！`,'special');}},
+      {name:'送手办',cost:4,trig:4,target:'none',desc:'全队+15%伤害+1体力/回合 2回合',
+        exec(me,t,G){
+          aliveAllies(me,G).forEach(a=>{
+            B(a,G,'dmgBonus',0.15,2,'+15%DMG',me);
+            B(a,G,'bonusSta',1,2,'+1STA/r',me);
+          });
+        }}
+    ],
+    ult:{name:'老虎机',target:'none',desc:'40%无效/40%250%法单体/20%500%法全体',
+      exec(me,t,G){
+        let r=Math.random();
+        let es=aliveEnemies(me,G);
+        if(r<0.4){L(G,`老虎机：什么都没有... 🎰`,'dodge');}
+        else if(r<0.8){if(es.length)D(me,pick(es),G,250,'magic');L(G,`老虎机：两个相同！🎰🎰`,'ult');}
+        else{es.forEach(e=>D(me,e,G,500,'magic'));L(G,`老虎机：JACKPOT！🎰🎰🎰`,'ult');}
+      }},
+    passive:{desc:'富婆之道',tick(){}}
+  },
+
+  trex:{
+    id:'trex',name:'Trex',rarity:'SR',color:'#44ddaa',faction:[],desc:'弱化/中间商',
+    skills:[
+      {name:'钥匙扣攻击',cost:1,trig:2,target:'enemy',desc:'85% 法术伤害',
+        exec(me,t,G){D(me,t,G,85,'magic');}},
+      {name:'魔戒控制',cost:2,trig:3,target:'enemy',desc:'120%法术+所有敌人-1触发',
+        exec(me,t,G){
+          D(me,t,G,120,'magic');
+          aliveEnemies(me,G).forEach(e=>{e.trigger=Math.max(0,e.trigger-1);});
+          L(G,`Trex 魔戒！全体敌人-1触发`,'special');
+        }},
+      {name:'中间商',cost:3,trig:4,target:'enemy',desc:'夺敌2体力→自留1归还1给队友',
+        exec(me,t,G){
+          let stolen=Math.min(t.stamina,2);t.stamina-=stolen;
+          me.stamina=Math.min(MAX_STA,me.stamina+1);
+          let allies=aliveAllies(me,G).filter(a=>a.id!==me.id);
+          if(allies.length&&stolen>1){
+            let ally=pick(allies);ally.stamina=Math.min(MAX_STA,ally.stamina+1);
+            L(G,`Trex 中间商：夺${stolen}体力，自留1给${ally.name}1`,'special');
+          }else{L(G,`Trex 中间商：夺${stolen}体力`,'special');}
+        }}
+    ],
+    ult:{name:'Keychain Rain',target:'none',desc:'3回合，每回合7-10钥匙扣×10%法全体',
+      exec(me,t,G){
+        for(let r=0;r<3;r++){
+          let keys=7+ri(4);
+          aliveEnemies(me,G).forEach(e=>D(me,e,G,keys*10,'magic'));
+          L(G,`Trex 钥匙扣雨！${keys}枚！`,'ult');
+        }
+      }},
+    passive:{desc:'商业直觉',tick(){}}
+  },
+
+  jeff:{
+    id:'jeff',name:'Jeff',rarity:'SSSR',color:'#ffaa88',faction:[],desc:'治愈/糖果系',
+    skills:[
+      {name:'召唤Jake出拳',cost:1,trig:2,target:'enemy',desc:'借用Jake的拳80%体术',
+        exec(me,t,G){D(me,t,G,80,'body');L(G,`Jeff借来Jake的拳！`,'special');}},
+      {name:'Dab Me Up',cost:2,trig:3,target:'ally',desc:'治疗目标20%最大HP',
+        exec(me,t,G){H(t,G,20,me);}},
+      {name:'Where My Hug At',cost:4,trig:4,target:'none',desc:'治疗血量最少的2名队友各35%HP',
+        exec(me,t,G){
+          let allies=aliveAllies(me,G).sort((a,b)=>a.hp-b.hp).slice(0,2);
+          allies.forEach(a=>H(a,G,35,me));
+        }}
+    ],
+    ult:{name:'四大天王',target:'none',desc:'召唤Chogun+Jake攻击+全队回20%HP',
+      exec(me,t,G){
+        let es=aliveEnemies(me,G);
+        if(es.length){D(me,pick(es),G,55,'body');D(me,pick(es),G,55,'body');}
+        aliveAllies(me,G).forEach(a=>H(a,G,20,me));
+        L(G,`Jeff 四大天王！召唤队友+全队治疗！`,'ult');
+      }},
+    passive:{desc:'每回合5%概率与随机敌方女角色离场2回合',
+      tick(me,G){
+        if(!me.isAbsent&&roll(0.05)){
+          let females=['charlotte','michelle','feliz','madame','cici'];
+          let efs=aliveEnemies(me,G).filter(e=>females.includes(e.charId));
+          if(efs.length){
+            let ef=pick(efs);
+            me.isAbsent=true;me.absentTimer=2;
+            ef.isAbsent=true;ef.absentTimer=2;
+            L(G,`${me.name} 和 ${ef.name} 一起离场了👀`,'passive');
+          }
+        }
+      },
+      onReturn(me,G){L(G,`${me.name} 回来了（心情不错）`,'passive');}}
+  },
+
+  lj:{
+    id:'lj',name:'LJ',rarity:'SR',color:'#cc88ff',faction:[],desc:'咒言输出',
+    skills:[
+      {name:'咒言·阿hi呀',cost:1,trig:2,target:'enemy',desc:'80% 法术伤害',
+        exec(me,t,G){D(me,t,G,80,'magic');}},
+      {name:'emo警告',cost:2,trig:3,target:'none',desc:'召唤Tim+Nina联合攻击',
+        exec(me,t,G){
+          let es=aliveEnemies(me,G);
+          if(!es.length)return;
+          let e=pick(es);
+          D(me,e,G,50+ri(21),'magic');
+          D(me,e,G,30+ri(21),'magic');
+          D(me,e,G,30+ri(21),'magic');
+          L(G,`LJ 呼叫Tim+Nina！`,'special');
+        }},
+      {name:'背叛的力量',cost:3,trig:4,target:'ally',desc:'偷拍队友→200%法术攻击敌人，队友-10%伤害1回合',
+        exec(me,t,G){
+          B(t,G,'dmgBonus',-0.1,1,'-10%DMG(被偷拍)',me);
+          let es=aliveEnemies(me,G);
+          if(es.length)D(me,pick(es),G,200,'magic');
+          L(G,`LJ 偷拍 ${t.name}！咒力爆发！`,'special');
+        }}
+    ],
+    ult:{name:'咒言集体输出',target:'none',desc:'5个朋友联合，150-300%法术分散全体',
+      exec(me,t,G){
+        let total=150+ri(151);
+        aliveEnemies(me,G).forEach(e=>D(me,e,G,total,'magic'));
+        L(G,`LJ 号召所有人！${total}% 法术扫射！`,'ult');
+      }},
+    passive:{desc:'咒言加成',tick(){}}
+  },
+
+  madame:{
+    id:'madame',name:'Madame',rarity:'SSSR',color:'#e8aa66',faction:[],desc:'法式咒术/弱化强化',
+    skills:[
+      {name:'Patate',cost:1,trig:2,target:'enemy',desc:'130%法术+薯条标记（受伤+20%，最多3层）',
+        exec(me,t,G){
+          D(me,t,G,130,'magic');
+          let fries=(t.fries||0);
+          if(fries<3){
+            t.fries=fries+1;
+            t.vuln=(t.vuln||0)+0.2;
+            t.buffs.push({type:'vuln',val:0.2,dur:999,label:`薯条×${t.fries}`});
+            L(G,`${t.name} 薯条标记！(×${t.fries}层)`,'debuff');
+          }
+        }},
+      {name:"C'est parti",cost:2,trig:3,target:'none',desc:'清除全队最多2个减益+可颂护盾250给血最少者',
+        exec(me,t,G){
+          aliveAllies(me,G).forEach(a=>{
+            let removed=0;
+            a.buffs=a.buffs.filter(b=>{
+              if(removed>=2)return true;
+              let isDebuff=['dot','vuln','magicVuln','dmgBonus'].filter(x=>x!=='dmgBonus').includes(b.type)||b.val<0;
+              if(isDebuff){removed++;return false;}return true;
+            });
+            recomputeStats(a);
+          });
+          let lowest=aliveAllies(me,G).sort((a,b)=>a.hp-b.hp)[0];
+          if(lowest){SH(lowest,G,250,me);L(G,`${lowest.name} 获得可颂护盾！`,'buff');}
+          L(G,`Madame 清除减益！`,'buff');
+        }},
+      {name:'Baguette',cost:4,trig:4,target:'none',desc:'140%体术全体+薯条真伤+黄油减法抗',
+        exec(me,t,G){
+          aliveEnemies(me,G).forEach(e=>{
+            D(me,e,G,140,'body');
+            if(!e.isDead&&(e.fries||0)>0){TD(me,e,G,e.fries*5);}
+            if(!e.isDead){e.magicVuln=(e.magicVuln||0)+0.2;e.buffs.push({type:'magicVuln',val:0.2,dur:2,label:'黄油-法抗'});}
+          });
+        }}
+    ],
+    ult:{name:'On Écrit',target:'none',desc:'2回合，每回合60%跳过行动+12%真伤',
+      exec(me,t,G){
+        for(let r=0;r<2;r++){
+          aliveEnemies(me,G).forEach(e=>{
+            if(roll(0.6)){e.stun=Math.max(e.stun||0,1);L(G,`${e.name} 被迫跳过行动！`,'debuff');}
+            TD(me,e,G,12);
+          });
+        }
+        L(G,`Madame 判决！2波审判！`,'ult');
+      }},
+    passive:{desc:'法国咒术威慑',tick(){}}
+  },
+
+  woojoo:{
+    id:'woojoo',name:'Woojoo',rarity:'SSSR',color:'#44cc88',faction:[],desc:'高压弱化/攻击',
+    skills:[
+      {name:'篮球攻击',cost:1,trig:2,target:'enemy',desc:'100% 法术伤害',
+        exec(me,t,G){D(me,t,G,100,'magic');}},
+      {name:'身高压制',cost:2,trig:3,target:'enemy',desc:'眩晕1回合+攻击-15% 2回合',
+        exec(me,t,G){
+          ST(t,G,1,me);
+          B(t,G,'dmgBonus',-0.15,2,'-15%攻击',me);
+          L(G,`Woojoo 2m30cm！${t.name} 被压制！`,'special');
+        }},
+      {name:'通灵术灌篮',cost:4,trig:4,target:'enemy',desc:'70%→250%法术，30%→被盖帽-15%HP',
+        exec(me,t,G){
+          if(roll(0.7)){D(me,t,G,250,'magic');L(G,`Woojoo 灌篮！`,'special');}
+          else{TD(me,me,G,15);L(G,`Woojoo 被盖帽！自损15%HP！`,'debuff');}
+        }}
+    ],
+    ult:{name:'绿色杀手',target:'enemy',desc:'3次三分投篮，60%成功各100%法术',
+      exec(me,t,G){
+        let hits=0;
+        for(let i=0;i<3;i++){
+          if(roll(0.6)){D(me,t,G,100,'magic');hits++;}
+        }
+        L(G,`Woojoo 三分挑战！命中${hits}/3！`,'ult');
+      }},
+    passive:{desc:'腿部攻击→攻击者眩晕1回合',
+      onTakeDamage(me,src,G){
+        if(roll(0.25)&&src&&!src.isDead){
+          ST(src,G,1,null);
+          L(G,`Woojoo 踢腿反击！${src.name} 眩晕！`,'passive');
+        }
+      }}
+  },
+
+  chogun:{
+    id:'chogun',name:'Chogun',rarity:'SSSR',color:'#ff6644',faction:[],desc:'极限运动/攻击',
+    skills:[
+      {name:'Swing',cost:1,trig:2,target:'enemy',desc:'100% 体术伤害',
+        exec(me,t,G){D(me,t,G,100,'body');}},
+      {name:'篮球攻击',cost:2,trig:3,target:'enemy',desc:'150% 法术伤害',
+        exec(me,t,G){D(me,t,G,150,'magic');}},
+      {name:'摩托车冲撞',cost:3,trig:4,target:'enemy',desc:'200% 法术伤害',
+        exec(me,t,G){D(me,t,G,200,'magic');L(G,`Chogun 摩托车冲撞！`,'special');}}
+    ],
+    ult:{name:'Those Jordans Are Fake',target:'enemy',desc:'30%→300%体术，70%→175%法术',
+      exec(me,t,G){
+        if(roll(0.3)){D(me,t,G,300,'body');L(G,`Chogun: FAKE AJ！300%体术！`,'ult');}
+        else{D(me,t,G,175,'magic');L(G,`Chogun: 175%法术！`,'ult');}
+      }},
+    passive:{desc:'每5回合跳伞离场2回合（15%死亡判定/回合），存活→全队+15%HP',
+      tick(me,G){
+        me._pc=(me._pc||0)+1;
+        if(me._pc%5===0&&!me.isAbsent){
+          me.isAbsent=true;me.absentTimer=2;me._skydive=true;
+          L(G,`${me.name} 跳伞出战场！`,'passive');
+        }
+      },
+      onReturn(me,G){
+        if(me._skydive){
+          me._skydive=false;
+          aliveAllies(me,G).forEach(a=>{
+            a.maxHP=Math.round(a.maxHP*1.15);a.hp=Math.min(a.hp+Math.round(MAX_HP*0.15),a.maxHP);
+          });
+          L(G,`${me.name} 跳伞回场！全队+15%最大HP！`,'passive');
+        }
+      },
+      absentTick(me,G){
+        if(me._skydive&&roll(0.15)){
+          me.hp=0;me.isDead=true;me.isAbsent=false;
+          L(G,`${me.name} 跳伞失败，牺牲了... ☠`,'death');
+        }
+      }}
+  }
+};
+
+// ═══════════════ GAME STATE ═══════════════
+let G = null;
+let pendingActions = [];
+let actQueue = [];
+let actQueueIdx = 0;
+let targetMode = null; // {actorId, skillIdx}
+
+function createCombatant(charId, isPlayer){
+  let ch=CHARS[charId];
+  return {
+    id:charId+(isPlayer?'_p':'_e'),charId,isPlayer,
+    name:ch.name,rarity:ch.rarity,color:ch.color,faction:ch.faction||[],
+    maxHP:MAX_HP,hp:MAX_HP,shield:0,
+    stamina:START_STA,trigger:0,
+    buffs:[],isDead:false,isAbsent:false,absentTimer:0,stun:0,betray:0,silenced:0,
+    dmgBonus:0,atkBonus:0,dmgReduction:0,vuln:0,magicVuln:0,bonusSta:0,
+    gpa:0,enhanced:false,fries:0,_pc:0
+  };
+}
+
+function initGame(playerIds, enemyIds){
+  G={
+    round:1,
+    playerTeam:playerIds.map(id=>createCombatant(id,true)),
+    enemyTeam:enemyIds.map(id=>createCombatant(id,false)),
+    log:[],winner:null
+  };
+  // Run battle-start passives
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    let ch=CHARS[c.charId];
+    if(ch.passive&&ch.passive.onBattleStart)ch.passive.onBattleStart(c,G);
+  });
+  L(G,'═══ 战斗开始！ ═══','win');
+  L(G,`我方: ${G.playerTeam.map(c=>c.name).join(' / ')} vs 对手: ${G.enemyTeam.map(c=>c.name).join(' / ')}`,'normal');
+}
+
+// ═══════════════ ROUND LOGIC ═══════════════
+function startRound(){
+  L(G,`─── 第 ${G.round} 回合 ───`,'log-round-sep');
+  
+  // Process absent ticks (Chogun skydive death check, etc)
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(c.isAbsent){
+      let ch=CHARS[c.charId];
+      if(ch.passive&&ch.passive.absentTick)ch.passive.absentTick(c,G);
+    }
+  });
+  
+  // Process absent returns
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(c.isAbsent&&!c.isDead){
+      c.absentTimer--;
+      if(c.absentTimer<=0){
+        c.isAbsent=false;
+        let ch=CHARS[c.charId];
+        if(ch.passive&&ch.passive.onReturn)ch.passive.onReturn(c,G);
+        else L(G,`${c.name} 回到场上`,'passive');
+      }
+    }
+  });
+
+  // Passive ticks
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead){
+      let ch=CHARS[c.charId];
+      if(ch.passive&&ch.passive.tick)ch.passive.tick(c,G);
+    }
+  });
+
+  // Stamina regen
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead&&!c.isAbsent){
+      c.stamina=Math.min(MAX_STA,c.stamina+STA_REGEN+(c.bonusSta||0));
+    }
+  });
+
+  // Build player act queue
+  actQueue=G.playerTeam.filter(c=>!c.isDead&&!c.isAbsent);
+  actQueueIdx=0;
+  pendingActions=[];
+  targetMode=null;
+
+  renderBattle();
+  promptNextPlayerAction();
+}
+
+function promptNextPlayerAction(){
+  if(actQueueIdx>=actQueue.length){
+    showExecuteButton();
+    return;
+  }
+  let actor=actQueue[actQueueIdx];
+  showSkillPanel(actor);
+  renderBattle();
+}
+
+function playerSelectSkill(skillIdx){
+  if(targetMode)return;
+  let actor=actQueue[actQueueIdx];
+  if(!actor)return;
+  
+  let ch=CHARS[actor.charId];
+  let isUlt=skillIdx==='ult';
+  let skill=isUlt?ch.ult:ch.skills[skillIdx];
+  
+  if(isUlt&&actor.trigger<TRIG_ULT)return;
+  if(!isUlt&&actor.stamina<skill.cost)return;
+  if(!isUlt&&actor.silenced>0&&skillIdx>0)return;
+
+  let needsTarget=skill.target==='enemy'||skill.target==='ally';
+  if(needsTarget){
+    targetMode={actorId:actor.id,skillIdx};
+    renderBattle();
+    showTargetHint(skill.target);
+  } else {
+    queueAction(actor,skillIdx,null);
+  }
+}
+
+function playerSelectTarget(targetId){
+  if(!targetMode)return;
+  let {actorId,skillIdx}=targetMode;
+  let actor=actQueue.find(c=>c.id===actorId);
+  queueAction(actor,skillIdx,targetId);
+  targetMode=null;
+}
+
+function queueAction(actor,skillIdx,targetId){
+  pendingActions.push({actorId:actor.id,skillIdx,targetId});
+  actQueueIdx++;
+  promptNextPlayerAction();
+}
+
+function executeRound(){
+  // Execute player actions
+  for(let action of pendingActions){
+    let actor=G.playerTeam.find(c=>c.id===action.actorId);
+    if(!actor||actor.isDead||actor.isAbsent)continue;
+    
+    let ch=CHARS[actor.charId];
+    let isUlt=action.skillIdx==='ult';
+    let skill=isUlt?ch.ult:ch.skills[action.skillIdx];
+    let target=action.targetId?[...G.playerTeam,...G.enemyTeam].find(c=>c.id===action.targetId):null;
+    
+    // Check betray
+    if(actor.betray>0&&target&&enemies(actor,G).includes(target)){
+      let allyTargets=aliveAllies(actor,G);
+      if(allyTargets.length)target=pick(allyTargets);
+      L(G,`${actor.name} 被收买！攻击了自己人！`,'debuff');
+    }
+    
+    if(isUlt){
+      actor.trigger=0;
+      L(G,`★ ${actor.name} 大招：${skill.name}！`,'ult');
+      skill.exec(actor,target,G);
+    } else {
+      actor.stamina-=skill.cost;
+      actor.trigger=Math.min(99,actor.trigger+skill.trig);
+      L(G,`${actor.name} 使用：${skill.name}`,'normal');
+      skill.exec(actor,target,G);
+      // Woojoo passive trigger check is handled in D()
+    }
+    checkDeaths();
+  }
+  
+  // Enemy AI actions
+  for(let enemy of G.enemyTeam){
+    if(enemy.isDead||enemy.isAbsent||enemy.stun>0)continue;
+    let {skillIdx,target}=aiChoose(enemy);
+    let ch=CHARS[enemy.charId];
+    let isUlt=skillIdx==='ult';
+    let skill=isUlt?ch.ult:ch.skills[skillIdx];
+    
+    if(isUlt){
+      enemy.trigger=0;
+      L(G,`★ [敌]${enemy.name} 大招：${skill.name}！`,'ult');
+      skill.exec(enemy,target,G);
+    } else {
+      enemy.stamina-=skill.cost;
+      enemy.trigger=Math.min(99,enemy.trigger+skill.trig);
+      L(G,`[敌]${enemy.name} 使用：${skill.name}`,'normal');
+      skill.exec(enemy,target,G);
+    }
+    checkDeaths();
+  }
+  
+  // End of round
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead){
+      tickBuffs(c,G);
+      if(c.silenced>0)c.silenced--;
+    }
+  });
+  checkDeaths();
+  
+  // Check Harrison passive (zero stamina)
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead&&c.charId==='harrison'&&c.stamina<=0&&!c.isAbsent){
+      let ch=CHARS['harrison'];
+      if(ch.passive&&ch.passive.onZeroStamina)ch.passive.onZeroStamina(c,G);
+    }
+  });
+  
+  if(checkWin())return;
+  G.round++;
+  startRound();
+}
+
+function checkDeaths(){
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(c.hp<=0&&!c.isDead){c.isDead=true;L(G,`${c.name} 倒下了！`,'death');}
+  });
+}
+
+function checkWin(){
+  let pe=alive(G.enemyTeam).length===0;
+  let pp=alive(G.playerTeam).length===0;
+  if(pe||pp){
+    G.winner=pe?'player':'enemy';
+    showEndScreen();
+    return true;
+  }
+  return false;
+}
+
+// ═══════════════ AI ═══════════════
+function aiChoose(enemy){
+  let ch=CHARS[enemy.charId];
+  let playerTargets=aliveAllies(enemy,G);
+  let enemyAllies=alive(G.enemyTeam);
+
+  // Betray override
+  if(enemy.betray>0){
+    let t=pick(enemyAllies.filter(a=>a.id!==enemy.id)||enemyAllies);
+    return{skillIdx:0,target:t||pick(playerTargets)};
+  }
+
+  // Use ult if available
+  if(enemy.trigger>=TRIG_ULT){
+    let sk=ch.ult;
+    let tgt=null;
+    if(sk.target==='enemy')tgt=pick(playerTargets);
+    else if(sk.target==='ally')tgt=pick(enemyAllies);
+    return{skillIdx:'ult',target:tgt};
+  }
+
+  // Silenced: only skill 0
+  if(enemy.silenced>0){
+    let sk=ch.skills[0];
+    let tgt=sk.target==='enemy'?pick(playerTargets):sk.target==='ally'?pick(enemyAllies):null;
+    return{skillIdx:0,target:tgt};
+  }
+
+  // Check if healer with allies hurt
+  let healers=['jeff','charlotte'];
+  if(healers.includes(enemy.charId)){
+    let hurt=enemyAllies.filter(a=>a.hp<a.maxHP*0.6);
+    if(hurt.length&&enemy.stamina>=2){
+      let sk=ch.skills[1]; // heal skill
+      let tgt=sk.target==='ally'?pick(hurt):pick(playerTargets);
+      return{skillIdx:1,target:tgt};
+    }
+  }
+
+  // Choose best affordable skill
+  let affordable=ch.skills.map((s,i)=>({s,i})).filter(({s})=>enemy.stamina>=s.cost);
+  if(!affordable.length)return{skillIdx:0,target:pick(playerTargets)};
+  
+  let chosen=affordable[affordable.length-1]; // highest cost = best
+  let sk=chosen.s;
+  let tgt=null;
+  if(sk.target==='enemy')tgt=pick(playerTargets);
+  else if(sk.target==='ally'){
+    tgt=pick(enemyAllies.filter(a=>a.hp<a.maxHP)||enemyAllies);
+  }
+  return{skillIdx:chosen.i,target:tgt};
+}
+
+// ═══════════════ RENDER ═══════════════
+function renderCombatant(c, isEnemy){
+  let ch=CHARS[c.charId];
+  let hpPct=Math.max(0,c.hp/c.maxHP*100);
+  let shPct=Math.min(100,c.shield/c.maxHP*100);
+  let tPct=Math.min(100,c.trigger/TRIG_ULT*100);
+  
+  let classes=['combatant-card'];
+  let isActing=actQueue[actQueueIdx]&&actQueue[actQueueIdx].id===c.id;
+  if(isActing)classes.push('is-active');
+  if(c.isDead)classes.push('is-dead');
+  if(c.isAbsent)classes.push('is-absent');
+  if(c.stun>0)classes.push('is-stunned');
+  
+  // Target mode interactivity
+  if(targetMode){
+    let tm=targetMode;
+    let actor=actQueue.find(x=>x.id===tm.actorId);
+    if(actor){
+      let sk=CHARS[actor.charId].skills[tm.skillIdx];
+      let wantEnemy=sk.target==='enemy';
+      let cIsEnemy2=!c.isPlayer;
+      if((wantEnemy&&cIsEnemy2&&!c.isDead&&!c.isAbsent)||(!wantEnemy&&!cIsEnemy2&&!c.isDead&&c.id!==actor.id)){
+        classes.push('is-target-mode');
+      }
+    }
+  }
+  
+  let bufTags=c.buffs.filter(b=>b.dur<999).slice(0,4).map(b=>`<span class="tag ${b.val>0?'tag-buff':'tag-debuff'}">${b.label}</span>`).join('');
+  let staTags='';
+  if(c.stun>0)staTags+=`<span class="tag tag-debuff">眩晕${c.stun}</span>`;
+  if(c.isAbsent)staTags+=`<span class="tag tag-special">离场</span>`;
+  if(c.betray>0)staTags+=`<span class="tag tag-debuff">叛变!</span>`;
+  if(c.silenced>0)staTags+=`<span class="tag tag-debuff">封印</span>`;
+  
+  let pip=(s,max)=>Array.from({length:max},(_,i)=>`<div class="pip${i<s?' filled':''}"></div>`).join('');
+  
+  let ultReady=c.trigger>=TRIG_ULT;
+  let badge=ultReady&&!c.isDead?`<div class="trig-badge">ULT!</div>`:'';
+  if(c.isAbsent&&!c.isDead)badge=`<div class="skip-badge">离场</div>`;
+  
+  let cardBorder=isActing?'#5577ff':c.isDead?'var(--border)':c.rarity==='SSSR'?'#9933cc55':c.rarity==='SSR'?'#c8901833':'var(--border)';
+  return`<div class="${classes.join(' ')} c-rarity-${c.rarity}" style="border-color:${cardBorder};--card-color:${c.color}" onclick="handleCardClick('${c.id}')">
+    <div class="c-header">
+      <div class="c-nameblock">
+        <div class="c-name" style="color:${c.color}">${c.name}</div>
+        <div style="margin-top:2px"><span class="c-rarity-dot"></span><span class="c-rarity-label">${c.rarity}</span></div>
+      </div>
+      <div class="c-badges">${badge}</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span>HP</span><span>${Math.round(c.hp)}${c.shield>0?` +${Math.round(c.shield)}`:''}</span></div>
+      <div class="bar-track"><div class="bar-fill hp-fill" style="width:${hpPct}%"></div></div>
+      ${c.shield>0?`<div class="bar-track" style="margin-top:2px"><div class="bar-fill shield-fill" style="width:${shPct}%"></div></div>`:''}
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span>TRIG</span><span>${c.trigger}/${TRIG_ULT}</span></div>
+      <div class="bar-track"><div class="bar-fill trig-fill" style="width:${tPct}%"></div></div>
+    </div>
+    <div class="sta-row"><span class="sta-label">STA</span>${pip(c.stamina,MAX_STA)}</div>
+    <div class="status-tags">${bufTags}${staTags}</div>
+  </div>`;
+}
+
+function handleCardClick(id){
+  if(!targetMode)return;
+  let c=[...G.playerTeam,...G.enemyTeam].find(x=>x.id===id);
+  if(!c||c.isDead||c.isAbsent)return;
+  
+  let tm=targetMode;
+  let actor=actQueue.find(x=>x.id===tm.actorId);
+  if(!actor)return;
+  let sk=CHARS[actor.charId].skills[tm.skillIdx];
+  let wantEnemy=sk.target==='enemy';
+  let cIsEnemy=!c.isPlayer;
+  if((wantEnemy&&cIsEnemy)||(!wantEnemy&&!cIsEnemy&&c.id!==actor.id)){
+    playerSelectTarget(id);
+    renderBattle();
+    promptNextPlayerAction();
+  }
+}
+
+function renderBattle(){
+  document.getElementById('round-label').textContent=`⚔ ROUND ${G.round}`;
+  document.getElementById('enemy-row').innerHTML=G.enemyTeam.map(c=>renderCombatant(c,true)).join('');
+  document.getElementById('player-row').innerHTML=G.playerTeam.map(c=>renderCombatant(c,false)).join('');
+  
+  let logEl=document.getElementById('battle-log');
+  let lastRound=-1;
+  logEl.innerHTML=G.log.map(e=>{
+    let sep='';
+    if(e.round!==lastRound&&e.type==='log-round-sep'){lastRound=e.round;sep=`<div class="log-round-sep">─── 回合 ${e.round} ───</div>`;}
+    return`${sep}<div class="log-entry log-${e.type||'normal'}">${e.msg}</div>`;
+  }).join('');
+  logEl.scrollTop=logEl.scrollHeight;
+}
+
+function showSkillPanel(actor){
+  let ch=CHARS[actor.charId];
+  let html=`<div class="action-title">轮到你行动 <span class="action-char">${actor.name}</span></div>
+  <div class="skill-buttons">`;
+  
+  ch.skills.forEach((sk,i)=>{
+    let disabled=actor.stamina<sk.cost||(actor.silenced>0&&i>0);
+    html+=`<button class="skill-btn${disabled?' ':''}" ${disabled?'disabled':''} onclick="playerSelectSkill(${i})">
+      <div class="skill-name">S${i+1}：${sk.name}</div>
+      <div class="skill-meta">体力 ${sk.cost} | 触发 +${sk.trig} | 目标：${sk.target==='enemy'?'敌方':sk.target==='ally'?'友方':sk.target==='none'?'全体/自动':'自身'}</div>
+      <div class="skill-desc">${sk.desc}</div>
+    </button>`;
+  });
+  
+  let ultReady=actor.trigger>=TRIG_ULT;
+  html+=`<button class="skill-btn ult-btn" ${ultReady?'':'disabled'} onclick="playerSelectSkill('ult')">
+    <div class="skill-name"><span class="ult-icon">★</span>ULT：${ch.ult.name}</div>
+    <div class="skill-meta">TRIG ${actor.trigger}/${TRIG_ULT} | 目标：${ch.ult.target==='enemy'?'敌方':ch.ult.target==='ally'?'友方':'自动'}</div>
+    <div class="skill-desc">${ch.ult.desc}</div>
+  </button>`;
+  
+  html+=`</div>`;
+  if(actor.stun>0){html=`<div class="action-title">⚠ ${actor.name} 被眩晕，跳过行动</div>`;skipStunned();}
+  
+  document.getElementById('action-content').innerHTML=html;
+}
+
+function skipStunned(){
+  actQueueIdx++;
+  setTimeout(()=>promptNextPlayerAction(),300);
+}
+
+function showTargetHint(targetType){
+  let el=document.getElementById('action-content');
+  let hint=targetType==='enemy'?'点击敌方角色选择目标 →':'点击友方角色选择目标 →';
+  let existing=el.innerHTML;
+  el.innerHTML=existing+`<div class="target-hint">▶ ${hint}</div>`;
+}
+
+function showExecuteButton(){
+  document.getElementById('action-content').innerHTML=`
+    <div class="action-title">✓ 行动已全部选择</div>
+    <div class="execute-area">
+      <button class="btn btn-go" style="padding:8px 24px;font-size:.9rem" onclick="executeRound()">执行回合 ▶</button>
+      <span class="execute-hint">${pendingActions.length} 个行动 · 敌方AI将随后行动</span>
+    </div>`;
+}
+
+function showEndScreen(){
+  renderBattle();
+  let isWin=G.winner==='player';
+  document.getElementById('end-title').textContent=isWin?'VICTORY':'DEFEAT';
+  document.getElementById('end-title').className=`end-title ${isWin?'victory':'defeat'}`;
+  document.getElementById('end-deco').textContent=isWin?'★':'✕';
+  document.getElementById('end-subtitle').textContent=isWin?'清迈无敌！你的队伍取得了胜利！':'全队倒下了...';
+  document.getElementById('end-round').textContent=`ROUND ${G.round} — ${isWin?'WINNER':'FALLEN'}`;
+  showScreen('end-screen');
+}
+
+// ═══════════════ SETUP ═══════════════
+const ALL_CHAR_IDS=Object.keys(CHARS);
+let selectedIds=[];
+
+function renderSelectScreen(){
+  let grid=document.getElementById('char-grid');
+  grid.innerHTML=ALL_CHAR_IDS.map(id=>{
+    let ch=CHARS[id];
+    let sel=selectedIds.includes(id);
+    let initials=ch.name.split('').slice(0,2).join('').toUpperCase();
+    return`<div class="char-card rarity-${ch.rarity}${sel?' selected':''}" style="--card-color:${ch.color}" onclick="toggleSelect('${id}')">
+      <div class="char-avatar">${initials}</div>
+      <div class="char-name" style="color:${ch.color}">${ch.name}</div>
+      <div><span class="char-rarity-tag">${ch.rarity}</span></div>
+      <div class="char-desc">${ch.desc||''}</div>
+      <div class="char-faction">${ch.faction&&ch.faction.length?ch.faction.join(' / '):''}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('sel-n').textContent=selectedIds.length;
+  document.getElementById('start-btn').disabled=selectedIds.length!==4;
+  for(let i=0;i<4;i++){
+    let el=document.getElementById('pip'+i);
+    if(el)el.className='sel-pip'+(i<selectedIds.length?' filled':'');
+  }
+}
+
+function toggleSelect(id){
+  let idx=selectedIds.indexOf(id);
+  if(idx>=0){selectedIds.splice(idx,1);}
+  else if(selectedIds.length<4){selectedIds.push(id);}
+  renderSelectScreen();
+}
+
+function startBattle(){
+  if(selectedIds.length!==4)return;
+  let remaining=ALL_CHAR_IDS.filter(id=>!selectedIds.includes(id));
+  let enemyIds=shuffle(remaining).slice(0,4);
+  initGame(selectedIds,enemyIds);
+  showScreen('battle-screen');
+  startRound();
+}
+
+function resetGame(){
+  selectedIds=[];G=null;pendingActions=[];actQueue=[];actQueueIdx=0;targetMode=null;
+  renderSelectScreen();
+  showScreen('select-screen');
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════ INIT ═══════════════
+renderSelectScreen();
+</script>
+</body>
+</html>
