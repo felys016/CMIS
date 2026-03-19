@@ -99,6 +99,18 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
 .c-badges{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .trig-badge{font-size:.5rem;background:#1a1000;color:var(--gold);padding:2px 5px;border-radius:4px;border:1px solid #aa7700;letter-spacing:.05em;animation:gpulse .7s ease-in-out infinite alternate}
 .skip-badge{font-size:.5rem;background:#200000;color:#ff7777;padding:2px 5px;border-radius:4px;border:1px solid #661111}
+
+.cat-tabs{display:flex;gap:0;margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:960px;margin:0 auto 12px}
+.cat-tab{flex:1;padding:8px 0;text-align:center;cursor:pointer;font-size:.72rem;letter-spacing:.12em;color:var(--dim);border:none;background:var(--bg2);transition:all .2s;font-family:'Rajdhani',sans-serif}
+.cat-tab.active{background:var(--bg3);color:var(--gold);border-bottom:2px solid var(--gold)}
+.cat-tab.locked{opacity:.3;cursor:not-allowed}
+.cat-divider{font-size:.6rem;color:var(--dim);letter-spacing:.15em;margin:8px 0 6px;max-width:960px;margin:8px auto 6px;display:flex;align-items:center;gap:8px}
+.cat-divider::before,.cat-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.recall-btn{border:1px solid #2a3355;background:#0a0f1a;color:#88aadd;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.7rem;transition:all .15s;text-align:left;min-width:130px;flex-shrink:0;font-family:'Rajdhani',sans-serif}
+.recall-btn:hover:not(:disabled){background:#121a2e;border-color:#4466aa;transform:translateY(-2px)}
+.recall-btn:disabled{opacity:.22;cursor:not-allowed}
+.recall-btn .skill-name{color:#88aadd}
+
 @keyframes gpulse{from{opacity:.7;box-shadow:none}to{opacity:1;box-shadow:0 0 6px #d4a84b88}}
 
 .bar-row{margin-top:4px}
@@ -184,11 +196,17 @@ body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;m
     <div class="sel-sub">CHIANG MAI INTERNATIONAL FIGHTING ✦ BATTLE SIMULATOR v1.0</div>
   </div>
   <div class="sel-body">
+    <div class="cat-tabs">
+      <button class="cat-tab active" id="tab-orig" onclick="switchTab('orig')">原版角色 (15)</button>
+      <button class="cat-tab" id="tab-gz" onclick="switchTab('gz')">生殖隔离 (4)</button>
+    </div>
     <div class="char-grid" id="char-grid"></div>
   </div>
   <div class="sel-footer">
     <div>
-      <div class="sel-count">选择 4 名角色 &nbsp;·&nbsp; <span id="sel-n">0</span>/4 已选</div>
+      <div class="sel-count">选择 4 名角色 &nbsp;·&nbsp; <span id="sel-n">0</span>/4 已选
+        <span id="cat-lock-hint" style="margin-left:8px;font-size:.6rem;color:#553300"></span>
+      </div>
       <div class="pip-track" style="margin-top:6px">
         <div class="sel-pip" id="pip0"></div><div class="sel-pip" id="pip1"></div>
         <div class="sel-pip" id="pip2"></div><div class="sel-pip" id="pip3"></div>
@@ -857,9 +875,204 @@ const CHARS = {
   }
 };
 
+
+// ═══ RECALLS added to existing chars above, plus new 生殖隔离 chars ═══
+
+// Patch recalls onto existing CHARS
+const RECALLS = {
+  zane:{name:'后山兄弟齐聚',desc:'全队恢复25%HP，自身+3触发值',
+    exec(me,t,G){aliveAllies(me,G).forEach(a=>H(a,G,25,me));me.trigger=Math.min(99,me.trigger+3);L(G,'Zane 后山齐聚！全队大回复！','special');}},
+  harrison:{name:'钢铁血脉',desc:'立即对全体敌人造成80%体术+掠夺各1体力',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>{D(me,e,G,80,'body');if(!e.isDead&&e.stamina>0){e.stamina--;me.stamina=Math.min(MAX_STA,me.stamina+1);}});L(G,'Harrison 钢铁血脉！','special');}},
+  charlotte:{name:'里香真情',desc:'与Zane双人转满威力立即触发+自身体力全满',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>B(e,G,'dot',100,3,'里香DoT',me));me.stamina=MAX_STA;L(G,'Charlotte 里香真情！满威力双人转！','special');}},
+  lucas:{name:'GPA 满分',desc:'GPA重置为10，下次大招按10GPA计算',
+    exec(me,t,G){me.gpa=10;L(G,'Lucas GPA满分！下次大招威力暴增！','special');}},
+  vincent:{name:'全力爆发',desc:'对单体目标造成400%体术伤害',
+    exec(me,t,G){let es=aliveEnemies(me,G);if(es.length)D(me,pick(es),G,400,'body');L(G,'Vincent 全力爆发！','special');}},
+  jake:{name:'Gangsta Photo',desc:'全队体术+30%/法术+10% 2回合',
+    exec(me,t,G){aliveAllies(me,G).forEach(a=>{B(a,G,'atkBonus',0.3,2,'+30%体术',me);B(a,G,'dmgBonus',0.1,2,'+10%法术',me);});L(G,'Jake Gangsta照！全队增益！','special');}},
+  cici:{name:'一万IQ 爆表',desc:'对全体敌人眩晕1回合并夺1触发值',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>{ST(e,G,1,me);e.trigger=Math.max(0,e.trigger-1);});L(G,'Cici IQ爆表！全场眩晕！','special');}},
+  feliz:{name:'直播大爆发',desc:'全队受伤-40% 2回合+自身回满HP',
+    exec(me,t,G){aliveAllies(me,G).forEach(a=>B(a,G,'dmgReduction',0.4,2,'-40%受伤',me));me.hp=me.maxHP;L(G,'Feliz 直播爆发！','special');}},
+  michelle:{name:'豪掷千金',desc:'对全体敌人触发值归零，全队+20%伤害2回合',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>e.trigger=0);aliveAllies(me,G).forEach(a=>B(a,G,'dmgBonus',0.2,2,'+20%DMG',me));L(G,'Michelle 豪掷千金！敌方触发值清零！','special');}},
+  trex:{name:'全场钥匙扣',desc:'对全体敌人造成200%法术伤害',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>D(me,e,G,200,'magic'));L(G,'Trex 钥匙扣终极雨！','special');}},
+  jeff:{name:'糖果派对',desc:'全队满血+生成200点护盾',
+    exec(me,t,G){aliveAllies(me,G).forEach(a=>{a.hp=a.maxHP;SH(a,G,200,me);});L(G,'Jeff 糖果派对！全队满血护盾！','special');}},
+  lj:{name:'全场咒言轰炸',desc:'对全体敌人造成250%法术',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>D(me,e,G,250,'magic'));L(G,'LJ 全场咒言！','special');}},
+  madame:{name:'断头台终审',desc:'全体敌人受20%最大HP真伤+眩晕1回合',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>{TD(me,e,G,20);if(!e.isDead)ST(e,G,1,me);});L(G,'Madame 断头台终审！','special');}},
+  woojoo:{name:'2m30cm震慑',desc:'全体敌人攻击-30% 3回合+眩晕随机1人',
+    exec(me,t,G){aliveEnemies(me,G).forEach(e=>B(e,G,'dmgBonus',-0.3,3,'-30%攻击',me));let es=aliveEnemies(me,G);if(es.length)ST(pick(es),G,1,me);L(G,'Woojoo 2m30cm全场震慑！','special');}},
+  chogun:{name:'极限摩托冲',desc:'自身体力+3，对单体造成350%法术',
+    exec(me,t,G){me.stamina=Math.min(MAX_STA,me.stamina+3);let es=aliveEnemies(me,G);if(es.length)D(me,pick(es),G,350,'magic');L(G,'Chogun 极限摩托！','special');}},
+};
+for(let id in RECALLS){if(CHARS[id])CHARS[id].recall=RECALLS[id];}
+
+// 生殖隔离 chars
+const GZ_CHARS = {
+  miqie2:{
+    id:'miqie2',name:'密切二',rarity:'SP',color:'#aa44ff',faction:['生殖隔离'],desc:'弱化/Perfection资源',
+    skills:[
+      {name:'Cognitive Dominion',cost:1,trig:2,target:'enemy',desc:'100%法术+敌方伤害-40% 2回合',
+        exec(me,t,G){D(me,t,G,100,'magic');B(t,G,'dmgBonus',-0.4,2,'-40%攻击',me);}},
+      {name:"I'm Literally Yuichi",cost:2,trig:3,target:'enemy',desc:'50%失败/50%打队友；Perfection+1',
+        exec(me,t,G){me.perfection=(me.perfection||0)+1;
+          if(roll(0.5)){D(me,t,G,120,'magic');L(G,'密切二 Endgame！','special');}
+          else{let allies=aliveAllies(me,G).filter(a=>a.id!==me.id);if(allies.length){D(me,pick(allies),G,80,'magic');L(G,'密切二打了队友...','debuff');}}}},
+      {name:'Based-Pilled',cost:3,trig:4,target:'none',desc:'全技能+50% 1回合，+1 Perfection',
+        exec(me,t,G){B(me,G,'dmgBonus',0.5,1,'+50%技能',me);me.perfection=(me.perfection||0)+1;L(G,`密切二 Based！Perf→${me.perfection}`,'special');}}
+    ],
+    ult:{name:'Checkmate',target:'none',desc:'沉默最高HP敌方2回合+全体105%+每Perfection+15%',
+      exec(me,t,G){
+        let es=aliveEnemies(me,G);let top=es.sort((a,b)=>b.hp-a.hp)[0];
+        if(top){top.silenced=2;L(G,`${top.name} 被封印2回合！`,'debuff');}
+        let bonus=(me.perfection||0)*15;
+        es.forEach(e=>D(me,e,G,105+bonus,'magic'));
+        aliveEnemies(me,G).forEach(e=>e.trigger=Math.max(0,e.trigger-2));
+        L(G,`密切二 Checkmate！Perf×${me.perfection}=+${bonus}%`,'ult');
+      }},
+    recall:{name:'Usogui Gambit',desc:'进入Endgame Mode：所有技能+50%威力 2回合',
+      exec(me,t,G){B(me,G,'dmgBonus',0.5,2,'Endgame+50%',me);L(G,'密切二 Endgame Mode激活！','special');}},
+    passive:{desc:'Perfection叠层强化大招',tick(){}}
+  },
+
+  edward_sp:{
+    id:'edward_sp',name:'爱德华 SP',rarity:'SP',color:'#ff6622',faction:['生殖隔离','后山兄弟'],desc:'手冲世界/平衡被动',
+    skills:[
+      {name:'抽象化',cost:2,trig:2,target:'none',desc:'50%法全体+随机眩晕+叠加虚层',
+        exec(me,t,G){aliveEnemies(me,G).forEach(e=>{D(me,e,G,50,'magic');if(roll(0.4)&&!e.isDead)ST(e,G,1,me);});me._void=(me._void||0)+1;}},
+      {name:'来一发',cost:2,trig:3,target:'none',desc:'体力回满+护盾300+HP永久+100+伤害+25% 2回合',
+        exec(me,t,G){me.stamina=MAX_STA;SH(me,G,300,me);me.maxHP+=100;me.hp=Math.min(me.hp+100,me.maxHP);B(me,G,'dmgBonus',0.25,2,'+25%DMG',me);me.trigger=Math.min(99,me.trigger+3);L(G,'爱德华 来一发！','special');}},
+      {name:'闪电五连鞭',cost:4,trig:4,target:'none',desc:'5连AOE，每鞭80%眩晕，击杀45%无消耗重放',
+        exec(me,t,G){
+          let mults=[40,85,130,175,220];let extra=0;
+          mults.forEach(p=>{aliveEnemies(me,G).forEach(e=>{if(!e.isDead){D(me,e,G,p,'magic');if(roll(0.8)&&!e.isDead)ST(e,G,1,me);}});});
+          let dead_check=aliveEnemies(me,G);
+          if(dead_check.length<G.enemyTeam.filter(x=>!x.isDead).length+1&&roll(0.45)){
+            aliveEnemies(me,G).forEach(e=>D(me,e,G,220,'magic'));L(G,'爱德华 击杀重放！','special');
+          }}}
+    ],
+    ult:{name:'领域展开·手冲世界',target:'none',desc:'145%全体→循环判定(25%蛇鲸/75%继续)→超10次额外7次',
+      exec(me,t,G){
+        me._ultCount=(me._ultCount||0)+1;
+        let bonus=me._ultCount>1?(me._ultCount-1)*0.2:0;
+        L(G,'爱德华 手冲世界！','ult');
+        aliveEnemies(me,G).forEach(e=>D(me,e,G,145,'magic'));
+        let loops=0,snakeWhales=0;
+        while(loops<20){
+          loops++;
+          if(roll(0.25)||loops>=10){
+            snakeWhales++;
+            aliveEnemies(me,G).forEach(e=>D(me,e,G,Math.round(220*(1+bonus)),'magic'));
+            aliveAllies(me,G).forEach(a=>{a.hp=Math.min(a.maxHP,a.hp+100);a.stamina=Math.min(MAX_STA,a.stamina+2);a.trigger=Math.min(99,a.trigger+2);});
+            if(loops<10)break;
+          }
+        }
+        if(snakeWhales>7){
+          let extra=(snakeWhales-7)*220;aliveEnemies(me,G).forEach(e=>D(me,e,G,extra,'magic'));
+          L(G,`手冲世界超载！额外 ${extra}%！`,'ult');
+        }
+        L(G,`蛇鲸共现 ${snakeWhales} 次！`,'special');
+        B(me,G,'dmgBonus',-0.3,99,'虚（-30%）',me);
+      }},
+    recall:{name:'肾斗士觉醒',desc:'清除虚状态，大招威力重置，+5触发值',
+      exec(me,t,G){me.buffs=me.buffs.filter(b=>b.label!=='虚（-30%）');recomputeStats(me);me.trigger=Math.min(99,me.trigger+5);L(G,'爱德华 肾斗士！虚状态清除！','special');}},
+    passive:{desc:'初始HP 500，无上限',
+      onBattleStart(me,G){me.maxHP=500;me.hp=500;L(G,'爱德华 平衡被动：初始500HP','passive');}}
+  },
+
+  luoda:{
+    id:'luoda',name:'露垰',rarity:'SSSR',color:'#44ccff',faction:['生殖隔离'],desc:'冰霜法师/控制',
+    skills:[
+      {name:'冬之帝国',cost:2,trig:2,target:'enemy',desc:'50%法DoT×3回合+每回合50%冻结2回合',
+        exec(me,t,G){
+          B(t,G,'dot',Math.round(50*1.75),3,'冰霜DoT',me);
+          if(roll(0.5))ST(t,G,2,me);
+          L(G,'露垰 冬之帝国！','special');}},
+      {name:'消除射线',cost:3,trig:3,target:'none',desc:'100%法全体+随机眩晕2人',
+        exec(me,t,G){
+          let es=aliveEnemies(me,G);
+          es.forEach(e=>D(me,e,G,Math.round(100*1.75),'magic'));
+          shuffle([...es]).slice(0,2).forEach(e=>{if(!e.isDead)ST(e,G,1,me);});}},
+      {name:'破碎天使',cost:4,trig:4,target:'enemy',desc:'150%体+50%法+10%真伤全体（×1.75）',
+        exec(me,t,G){
+          D(me,t,G,Math.round(150*1.75),'body');
+          if(!t.isDead)D(me,t,G,Math.round(50*1.75),'magic');
+          aliveEnemies(me,G).forEach(e=>{if(!e.isDead)TD(me,e,G,10);});}}
+    ],
+    ult:{name:'天空之城',target:'none',desc:'全体-1体力-2触发+200%体+200%法，10%秒杀/90%触发值→9',
+      exec(me,t,G){
+        aliveEnemies(me,G).forEach(e=>{
+          e.stamina=Math.max(0,e.stamina-1);e.trigger=Math.max(0,e.trigger-2);
+          D(me,e,G,Math.round(200*1.75),'body');if(!e.isDead)D(me,e,G,Math.round(200*1.75),'magic');
+        });
+        if(roll(0.1)){let e=pick(aliveEnemies(me,G));if(e){e.hp=0;e.isDead=true;L(G,`天空之城秒杀 ${e.name}！`,'death');}}
+        else{me.trigger=9;L(G,'天空之城！露垰触发值→9','ult');}
+      }},
+    recall:{name:'课题AP+',desc:'下次攻击追加404%法×4次（经终极之力加成）',
+      exec(me,t,G){me._apPlus=true;L(G,'露垰 课题AP+！下次攻击必杀追加！','special');}},
+    passive:{desc:'终极之力：所有技能×1.75，受伤固定-25%',
+      onBattleStart(me,G){B(me,G,'dmgReduction',0.25,999,'-25%受伤(终极)',me);L(G,'露垰 终极之力：技能×1.75，受伤-25%','passive');}},
+    onHit(me,t,G){
+      if(me._apPlus){me._apPlus=false;
+        for(let i=0;i<4;i++)D(me,t,G,Math.round(404*1.75),'magic');
+        L(G,'AP+ 触发！×4追加攻击！','special');}
+    }
+  },
+
+  toma:{
+    id:'toma',name:'托马',rarity:'SSR',color:'#44ffaa',faction:['生殖隔离'],desc:'坦克/支援',
+    skills:[
+      {name:'小学大喊',cost:2,trig:2,target:'enemy',desc:'锁定仇恨：自身护盾+300，反伤30%，受伤-30%',
+        exec(me,t,G){SH(me,G,300,me);B(me,G,'dmgReduction',0.3,2,'-30%受伤',me);me._taunt=true;me._tauntTimer=2;L(G,'托马 仇恨锁定！护盾+300！','special');}},
+      {name:'铅笔三联戳',cost:2,trig:3,target:'enemy',desc:'20%体+锁定目标1回合（下回合自动三连击）',
+        exec(me,t,G){D(me,t,G,20,'body');me._tripleTarget=t.id;L(G,`托马锁定 ${t.name}！下回合三连击！`,'special');}},
+      {name:'爆蛋',cost:3,trig:4,target:'none',desc:'130%体全体男性+伤害-40% 2回合+眩晕',
+        exec(me,t,G){
+          let males=['zane','harrison','lucas','vincent','jake','trex','jeff','lj','woojoo','chogun','miqie2','edward_sp','toma'];
+          aliveEnemies(me,G).filter(e=>males.includes(e.charId)).forEach(e=>{
+            D(me,e,G,130,'body');if(!e.isDead){B(e,G,'dmgBonus',-0.4,2,'-40%攻击',me);ST(e,G,1,me);}
+          });
+          L(G,'托马 爆蛋！（仅对男性有效）','special');}}
+    ],
+    ult:{name:'回来吧我的蛋',target:'none',desc:'复活所有阵亡队友+全队+300HP+200护盾+3体力+2触发',
+      exec(me,t,G){
+        myTeam(me,G).filter(c=>c.isDead).forEach(c=>{
+          c.isDead=false;c.hp=Math.round(c.maxHP*0.3);c.shield=0;c.buffs=[];recomputeStats(c);
+          L(G,`${c.name} 被托马复活！30%HP复活！`,'heal');
+        });
+        aliveAllies(me,G).forEach(a=>{
+          a.hp=Math.min(a.maxHP,a.hp+300);SH(a,G,200,me);
+          a.stamina=Math.min(MAX_STA,a.stamina+3);a.trigger=Math.min(99,a.trigger+2);
+        });
+        L(G,'托马 我的蛋！全队复活+增援！','ult');}},
+    recall:{name:'爆弹最终形态',desc:'自身护盾+500，下回合爆蛋不限性别',
+      exec(me,t,G){SH(me,G,500,me);me._noGenderLimit=true;L(G,'托马 爆弹最终形态！护盾+500！','special');}},
+    passive:{desc:'HP<50%：初始+30%技能伤害，每低10%再+10%',
+      tick(me,G){
+        let hpPct=me.hp/me.maxHP;
+        if(hpPct<0.5){
+          let bonus=0.3+Math.floor((0.5-hpPct)/0.1)*0.1;
+          me.buffs=me.buffs.filter(b=>b.label!=='暴怒');
+          me.buffs.push({type:'dmgBonus',val:bonus,dur:2,label:'暴怒'});
+          recomputeStats(me);
+        }
+      }}
+  }
+};
+for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
+
+const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma'];
+let selectedCategory=null;
+
 // ═══════════════ GAME STATE ═══════════════
 let G = null;
-let pendingActions = [];
 let actQueue = [];
 let actQueueIdx = 0;
 let targetMode = null; // {actorId, skillIdx}
@@ -873,7 +1086,7 @@ function createCombatant(charId, isPlayer){
     stamina:START_STA,trigger:0,
     buffs:[],isDead:false,isAbsent:false,absentTimer:0,stun:0,betray:0,silenced:0,
     dmgBonus:0,atkBonus:0,dmgReduction:0,vuln:0,magicVuln:0,bonusSta:0,
-    gpa:0,enhanced:false,fries:0,_pc:0
+    gpa:0,enhanced:false,fries:0,_pc:0,recallUsed:false,perfection:0
   };
 }
 
@@ -897,58 +1110,43 @@ function initGame(playerIds, enemyIds){
 function startRound(){
   L(G,`─── 第 ${G.round} 回合 ───`,'log-round-sep');
   
-  // Process absent ticks (Chogun skydive death check, etc)
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(c.isAbsent){
-      let ch=CHARS[c.charId];
-      if(ch.passive&&ch.passive.absentTick)ch.passive.absentTick(c,G);
-    }
+    if(c.isAbsent){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.absentTick)ch.passive.absentTick(c,G);}
   });
-  
-  // Process absent returns
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(c.isAbsent&&!c.isDead){
-      c.absentTimer--;
-      if(c.absentTimer<=0){
-        c.isAbsent=false;
-        let ch=CHARS[c.charId];
+    if(c.isAbsent&&!c.isDead){c.absentTimer--;
+      if(c.absentTimer<=0){c.isAbsent=false;let ch=CHARS[c.charId];
         if(ch.passive&&ch.passive.onReturn)ch.passive.onReturn(c,G);
-        else L(G,`${c.name} 回到场上`,'passive');
-      }
-    }
+        else L(G,`${c.name} 回到场上`,'passive');}}
   });
-
-  // Passive ticks
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead){
-      let ch=CHARS[c.charId];
-      if(ch.passive&&ch.passive.tick)ch.passive.tick(c,G);
-    }
+    if(!c.isDead){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.tick)ch.passive.tick(c,G);}
   });
-
-  // Stamina regen
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead&&!c.isAbsent){
-      c.stamina=Math.min(MAX_STA,c.stamina+STA_REGEN+(c.bonusSta||0));
-    }
+    if(!c.isDead&&!c.isAbsent)c.stamina=Math.min(MAX_STA,c.stamina+STA_REGEN+(c.bonusSta||0));
   });
 
-  // Build player act queue
   actQueue=G.playerTeam.filter(c=>!c.isDead&&!c.isAbsent);
   actQueueIdx=0;
-  pendingActions=[];
   targetMode=null;
-
   renderBattle();
   promptNextPlayerAction();
 }
 
 function promptNextPlayerAction(){
+  if(checkWin())return;
   if(actQueueIdx>=actQueue.length){
-    showExecuteButton();
+    runEnemyPhase();
     return;
   }
   let actor=actQueue[actQueueIdx];
+  if(actor.stun>0){
+    L(G,`${actor.name} 眩晕，跳过行动`,'debuff');
+    actQueueIdx++;
+    renderBattle();
+    setTimeout(()=>promptNextPlayerAction(),200);
+    return;
+  }
   showSkillPanel(actor);
   renderBattle();
 }
@@ -956,23 +1154,23 @@ function promptNextPlayerAction(){
 function playerSelectSkill(skillIdx){
   if(targetMode)return;
   let actor=actQueue[actQueueIdx];
-  if(!actor)return;
-  
+  if(!actor||actor.isDead||actor.isAbsent)return;
   let ch=CHARS[actor.charId];
   let isUlt=skillIdx==='ult';
-  let skill=isUlt?ch.ult:ch.skills[skillIdx];
-  
+  let isRecall=skillIdx==='recall';
+  let skill=isUlt?ch.ult:isRecall?ch.recall:ch.skills[skillIdx];
+  if(!skill)return;
   if(isUlt&&actor.trigger<TRIG_ULT)return;
-  if(!isUlt&&actor.stamina<skill.cost)return;
-  if(!isUlt&&actor.silenced>0&&skillIdx>0)return;
-
+  if(isRecall&&actor.recallUsed)return;
+  if(!isUlt&&!isRecall&&actor.stamina<skill.cost)return;
+  if(!isUlt&&!isRecall&&actor.silenced>0&&skillIdx>0)return;
   let needsTarget=skill.target==='enemy'||skill.target==='ally';
   if(needsTarget){
     targetMode={actorId:actor.id,skillIdx};
     renderBattle();
     showTargetHint(skill.target);
   } else {
-    queueAction(actor,skillIdx,null);
+    executePlayerAction(actor,skillIdx,null);
   }
 }
 
@@ -980,88 +1178,66 @@ function playerSelectTarget(targetId){
   if(!targetMode)return;
   let {actorId,skillIdx}=targetMode;
   let actor=actQueue.find(c=>c.id===actorId);
-  queueAction(actor,skillIdx,targetId);
   targetMode=null;
+  executePlayerAction(actor,skillIdx,targetId);
 }
 
-function queueAction(actor,skillIdx,targetId){
-  pendingActions.push({actorId:actor.id,skillIdx,targetId});
+function executePlayerAction(actor,skillIdx,targetId){
+  if(!actor||actor.isDead||actor.isAbsent)return;
+  let ch=CHARS[actor.charId];
+  let isUlt=skillIdx==='ult';
+  let isRecall=skillIdx==='recall';
+  let skill=isUlt?ch.ult:isRecall?ch.recall:ch.skills[skillIdx];
+  let target=targetId?[...G.playerTeam,...G.enemyTeam].find(c=>c.id===targetId):null;
+  if(actor.betray>0&&target&&enemies(actor,G).includes(target)){
+    let allyTargets=aliveAllies(actor,G);
+    if(allyTargets.length)target=pick(allyTargets);
+    L(G,`${actor.name} 被收买！攻击了自己人！`,'debuff');
+  }
+  if(isRecall){
+    actor.recallUsed=true;
+    L(G,`↺ ${actor.name} 回想：${skill.name}！`,'special');
+    skill.exec(actor,target,G);
+  } else if(isUlt){
+    actor.trigger=0;
+    L(G,`★ ${actor.name} 大招：${skill.name}！`,'ult');
+    skill.exec(actor,target,G);
+  } else {
+    actor.stamina-=skill.cost;
+    actor.trigger=Math.min(99,actor.trigger+skill.trig);
+    L(G,`${actor.name} 使用：${skill.name}`,'normal');
+    skill.exec(actor,target,G);
+    if(ch.onHit)ch.onHit(actor,target,G);
+  }
+  checkDeaths();
   actQueueIdx++;
+  renderBattle();
   promptNextPlayerAction();
 }
 
-function executeRound(){
-  // Execute player actions
-  for(let action of pendingActions){
-    let actor=G.playerTeam.find(c=>c.id===action.actorId);
-    if(!actor||actor.isDead||actor.isAbsent)continue;
-    
-    let ch=CHARS[actor.charId];
-    let isUlt=action.skillIdx==='ult';
-    let skill=isUlt?ch.ult:ch.skills[action.skillIdx];
-    let target=action.targetId?[...G.playerTeam,...G.enemyTeam].find(c=>c.id===action.targetId):null;
-    
-    // Check betray
-    if(actor.betray>0&&target&&enemies(actor,G).includes(target)){
-      let allyTargets=aliveAllies(actor,G);
-      if(allyTargets.length)target=pick(allyTargets);
-      L(G,`${actor.name} 被收买！攻击了自己人！`,'debuff');
-    }
-    
-    if(isUlt){
-      actor.trigger=0;
-      L(G,`★ ${actor.name} 大招：${skill.name}！`,'ult');
-      skill.exec(actor,target,G);
-    } else {
-      actor.stamina-=skill.cost;
-      actor.trigger=Math.min(99,actor.trigger+skill.trig);
-      L(G,`${actor.name} 使用：${skill.name}`,'normal');
-      skill.exec(actor,target,G);
-      // Woojoo passive trigger check is handled in D()
-    }
-    checkDeaths();
-  }
-  
-  // Enemy AI actions
+function runEnemyPhase(){
   for(let enemy of G.enemyTeam){
     if(enemy.isDead||enemy.isAbsent||enemy.stun>0)continue;
     let {skillIdx,target}=aiChoose(enemy);
     let ch=CHARS[enemy.charId];
     let isUlt=skillIdx==='ult';
     let skill=isUlt?ch.ult:ch.skills[skillIdx];
-    
-    if(isUlt){
-      enemy.trigger=0;
-      L(G,`★ [敌]${enemy.name} 大招：${skill.name}！`,'ult');
-      skill.exec(enemy,target,G);
-    } else {
-      enemy.stamina-=skill.cost;
-      enemy.trigger=Math.min(99,enemy.trigger+skill.trig);
-      L(G,`[敌]${enemy.name} 使用：${skill.name}`,'normal');
-      skill.exec(enemy,target,G);
-    }
+    if(isUlt){enemy.trigger=0;L(G,`★ [敌]${enemy.name} 大招：${skill.name}！`,'ult');skill.exec(enemy,target,G);}
+    else{enemy.stamina-=skill.cost;enemy.trigger=Math.min(99,enemy.trigger+skill.trig);L(G,`[敌]${enemy.name} 使用：${skill.name}`,'normal');skill.exec(enemy,target,G);}
     checkDeaths();
   }
-  
-  // End of round
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead){
-      tickBuffs(c,G);
-      if(c.silenced>0)c.silenced--;
-    }
+    if(!c.isDead){tickBuffs(c,G);if(c.silenced>0)c.silenced--;}
   });
   checkDeaths();
-  
-  // Check Harrison passive (zero stamina)
   [...G.playerTeam,...G.enemyTeam].forEach(c=>{
     if(!c.isDead&&c.charId==='harrison'&&c.stamina<=0&&!c.isAbsent){
-      let ch=CHARS['harrison'];
-      if(ch.passive&&ch.passive.onZeroStamina)ch.passive.onZeroStamina(c,G);
+      let ch=CHARS['harrison'];if(ch.passive&&ch.passive.onZeroStamina)ch.passive.onZeroStamina(c,G);
     }
   });
-  
   if(checkWin())return;
   G.round++;
+  renderBattle();
   startRound();
 }
 
@@ -1203,17 +1379,16 @@ function handleCardClick(id){
   if(!targetMode)return;
   let c=[...G.playerTeam,...G.enemyTeam].find(x=>x.id===id);
   if(!c||c.isDead||c.isAbsent)return;
-  
   let tm=targetMode;
   let actor=actQueue.find(x=>x.id===tm.actorId);
   if(!actor)return;
-  let sk=CHARS[actor.charId].skills[tm.skillIdx];
+  let isUlt=tm.skillIdx==='ult';
+  let isRecall=tm.skillIdx==='recall';
+  let sk=isUlt?CHARS[actor.charId].ult:isRecall?CHARS[actor.charId].recall:CHARS[actor.charId].skills[tm.skillIdx];
   let wantEnemy=sk.target==='enemy';
   let cIsEnemy=!c.isPlayer;
   if((wantEnemy&&cIsEnemy)||(!wantEnemy&&!cIsEnemy&&c.id!==actor.id)){
     playerSelectTarget(id);
-    renderBattle();
-    promptNextPlayerAction();
   }
 }
 
@@ -1234,34 +1409,33 @@ function renderBattle(){
 
 function showSkillPanel(actor){
   let ch=CHARS[actor.charId];
-  let html=`<div class="action-title">轮到你行动 <span class="action-char">${actor.name}</span></div>
+  let remaining=actQueue.length-actQueueIdx;
+  let html=`<div class="action-title">轮到你行动 <span class="action-char">${actor.name}</span> <span style="font-size:.58rem;color:var(--dim);font-family:'Share Tech Mono',monospace">（剩余 ${remaining} 人）</span></div>
   <div class="skill-buttons">`;
-  
   ch.skills.forEach((sk,i)=>{
     let disabled=actor.stamina<sk.cost||(actor.silenced>0&&i>0);
-    html+=`<button class="skill-btn${disabled?' ':''}" ${disabled?'disabled':''} onclick="playerSelectSkill(${i})">
+    html+=`<button class="skill-btn" ${disabled?'disabled':''} onclick="playerSelectSkill(${i})">
       <div class="skill-name">S${i+1}：${sk.name}</div>
       <div class="skill-meta">体力 ${sk.cost} | 触发 +${sk.trig} | 目标：${sk.target==='enemy'?'敌方':sk.target==='ally'?'友方':sk.target==='none'?'全体/自动':'自身'}</div>
       <div class="skill-desc">${sk.desc}</div>
     </button>`;
   });
-  
   let ultReady=actor.trigger>=TRIG_ULT;
   html+=`<button class="skill-btn ult-btn" ${ultReady?'':'disabled'} onclick="playerSelectSkill('ult')">
     <div class="skill-name"><span class="ult-icon">★</span>ULT：${ch.ult.name}</div>
     <div class="skill-meta">TRIG ${actor.trigger}/${TRIG_ULT} | 目标：${ch.ult.target==='enemy'?'敌方':ch.ult.target==='ally'?'友方':'自动'}</div>
     <div class="skill-desc">${ch.ult.desc}</div>
   </button>`;
-  
+  if(ch.recall){
+    let rDisabled=actor.recallUsed;
+    html+=`<button class="recall-btn" ${rDisabled?'disabled':''} onclick="playerSelectSkill('recall')">
+      <div class="skill-name">↺ 回想：${ch.recall.name}${rDisabled?' (已用)':''}</div>
+      <div class="skill-meta">每场限1次 · 免费</div>
+      <div class="skill-desc">${ch.recall.desc}</div>
+    </button>`;
+  }
   html+=`</div>`;
-  if(actor.stun>0){html=`<div class="action-title">⚠ ${actor.name} 被眩晕，跳过行动</div>`;skipStunned();}
-  
   document.getElementById('action-content').innerHTML=html;
-}
-
-function skipStunned(){
-  actQueueIdx++;
-  setTimeout(()=>promptNextPlayerAction(),300);
 }
 
 function showTargetHint(targetType){
@@ -1271,14 +1445,7 @@ function showTargetHint(targetType){
   el.innerHTML=existing+`<div class="target-hint">▶ ${hint}</div>`;
 }
 
-function showExecuteButton(){
-  document.getElementById('action-content').innerHTML=`
-    <div class="action-title">✓ 行动已全部选择</div>
-    <div class="execute-area">
-      <button class="btn btn-go" style="padding:8px 24px;font-size:.9rem" onclick="executeRound()">执行回合 ▶</button>
-      <span class="execute-hint">${pendingActions.length} 个行动 · 敌方AI将随后行动</span>
-    </div>`;
-}
+// showExecuteButton removed - actions now execute immediately
 
 function showEndScreen(){
   renderBattle();
@@ -1292,16 +1459,27 @@ function showEndScreen(){
 }
 
 // ═══════════════ SETUP ═══════════════
-const ALL_CHAR_IDS=Object.keys(CHARS);
 let selectedIds=[];
+let activeTab='orig';
+
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-orig').className='cat-tab'+(tab==='orig'?' active':'')+(selectedCategory==='gz'?' locked':'');
+  document.getElementById('tab-gz').className='cat-tab'+(tab==='gz'?' active':'')+(selectedCategory==='orig'?' locked':'');
+  renderSelectScreen();
+}
 
 function renderSelectScreen(){
+  let ids=activeTab==='orig'?ORIG_IDS:GZ_IDS;
+  let otherCat=activeTab==='orig'?'gz':'orig';
+  let locked=selectedCategory&&selectedCategory!==activeTab;
   let grid=document.getElementById('char-grid');
-  grid.innerHTML=ALL_CHAR_IDS.map(id=>{
+  grid.innerHTML=ids.map(id=>{
     let ch=CHARS[id];
     let sel=selectedIds.includes(id);
-    let initials=ch.name.split('').slice(0,2).join('').toUpperCase();
-    return`<div class="char-card rarity-${ch.rarity}${sel?' selected':''}" style="--card-color:${ch.color}" onclick="toggleSelect('${id}')">
+    let dim=locked&&!sel;
+    let initials=ch.name.replace(/[\u4e00-\u9fff]/g,'').slice(0,2).toUpperCase()||ch.name.slice(0,2);
+    return`<div class="char-card rarity-${ch.rarity}${sel?' selected':''}${dim?' is-dead':''}" style="--card-color:${ch.color};${dim?'pointer-events:none;filter:grayscale(.8) opacity(.4)':''}" onclick="toggleSelect('${id}','${activeTab==='orig'?'orig':'gz'}')">
       <div class="char-avatar">${initials}</div>
       <div class="char-name" style="color:${ch.color}">${ch.name}</div>
       <div><span class="char-rarity-tag">${ch.rarity}</span></div>
@@ -1311,30 +1489,43 @@ function renderSelectScreen(){
   }).join('');
   document.getElementById('sel-n').textContent=selectedIds.length;
   document.getElementById('start-btn').disabled=selectedIds.length!==4;
-  for(let i=0;i<4;i++){
-    let el=document.getElementById('pip'+i);
-    if(el)el.className='sel-pip'+(i<selectedIds.length?' filled':'');
+  for(let i=0;i<4;i++){let el=document.getElementById('pip'+i);if(el)el.className='sel-pip'+(i<selectedIds.length?' filled':'');}
+  let hint=document.getElementById('cat-lock-hint');
+  if(hint){
+    if(selectedCategory==='orig')hint.textContent='⚠ 已锁定原版阵营';
+    else if(selectedCategory==='gz')hint.textContent='⚠ 已锁定生殖隔离阵营';
+    else hint.textContent='';
   }
+  document.getElementById('tab-orig').className='cat-tab'+(activeTab==='orig'?' active':'')+(selectedCategory==='gz'?' locked':'');
+  document.getElementById('tab-gz').className='cat-tab'+(activeTab==='gz'?' active':'')+(selectedCategory==='orig'?' locked':'');
 }
 
-function toggleSelect(id){
+function toggleSelect(id,cat){
+  if(selectedCategory&&selectedCategory!==cat)return;
   let idx=selectedIds.indexOf(id);
-  if(idx>=0){selectedIds.splice(idx,1);}
-  else if(selectedIds.length<4){selectedIds.push(id);}
+  if(idx>=0){
+    selectedIds.splice(idx,1);
+    if(selectedIds.length===0)selectedCategory=null;
+  } else if(selectedIds.length<4){
+    selectedIds.push(id);
+    selectedCategory=cat;
+  }
   renderSelectScreen();
 }
 
 function startBattle(){
   if(selectedIds.length!==4)return;
-  let remaining=ALL_CHAR_IDS.filter(id=>!selectedIds.includes(id));
-  let enemyIds=shuffle(remaining).slice(0,4);
+  let pool=selectedCategory==='gz'?GZ_IDS:ORIG_IDS;
+  let remaining=[...ORIG_IDS,...GZ_IDS].filter(id=>!selectedIds.includes(id));
+  let enemyPool=remaining.length>=4?remaining:[...ORIG_IDS,...GZ_IDS].filter(id=>!selectedIds.includes(id));
+  let enemyIds=shuffle(enemyPool).slice(0,4);
   initGame(selectedIds,enemyIds);
   showScreen('battle-screen');
   startRound();
 }
 
 function resetGame(){
-  selectedIds=[];G=null;pendingActions=[];actQueue=[];actQueueIdx=0;targetMode=null;
+  selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';
   renderSelectScreen();
   showScreen('select-screen');
 }
