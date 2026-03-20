@@ -1695,6 +1695,73 @@ async function zaneEXExecUltAI(){
   }
 }
 
+function createCombatant(charId, isPlayer){
+  let ch=CHARS[charId];
+  return {
+    id:charId+(isPlayer?'_p':'_e'),charId,isPlayer,
+    name:ch.name,rarity:ch.rarity,color:ch.color,faction:ch.faction||[],
+    maxHP:MAX_HP,hp:MAX_HP,shield:0,
+    stamina:START_STA,trigger:0,
+    buffs:[],isDead:false,isAbsent:false,absentTimer:0,stun:0,betray:0,silenced:0,
+    dmgBonus:0,atkBonus:0,dmgReduction:0,vuln:0,magicVuln:0,bonusSta:0,
+    gpa:0,enhanced:false,fries:0,_pc:0,recallUsed:false,perfection:0
+  };
+}
+
+function initGame(playerIds, enemyIds){
+  G={
+    round:1,
+    playerTeam:playerIds.map(id=>createCombatant(id,true)),
+    enemyTeam:enemyIds.map(id=>createCombatant(id,false)),
+    log:[],winner:null
+  };
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    let ch=CHARS[c.charId];
+    if(ch.passive&&ch.passive.onBattleStart)ch.passive.onBattleStart(c,G);
+  });
+  L(G,'═══ 战斗开始！ ═══','win');
+  L(G,'我方: '+G.playerTeam.map(c=>c.name).join(' / ')+' vs 对手: '+G.enemyTeam.map(c=>c.name).join(' / '),'normal');
+}
+
+// ═══════════════ ROUND LOGIC ═══════════════
+function startRound(){
+  L(G,'─── 第 '+G.round+' 回合 ───','log-round-sep');
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(c.isAbsent){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.absentTick)ch.passive.absentTick(c,G);}
+  });
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(c.isAbsent&&!c.isDead){c.absentTimer--;
+      if(c.absentTimer<=0){c.isAbsent=false;let ch=CHARS[c.charId];
+        if(ch.passive&&ch.passive.onReturn)ch.passive.onReturn(c,G);
+        else L(G,c.name+' 回到场上','passive');}}
+  });
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.tick)ch.passive.tick(c,G);}
+  });
+  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+    if(!c.isDead&&!c.isAbsent)c.stamina=Math.min(MAX_STA,c.stamina+STA_REGEN+(c.bonusSta||0));
+  });
+  actQueue=G.playerTeam.filter(c=>!c.isDead&&!c.isAbsent);
+  actQueueIdx=0;
+  targetMode=null;
+  renderBattle();
+  promptNextPlayerAction();
+}
+
+function promptNextPlayerAction(){
+  if(checkWin())return;
+  if(actQueueIdx>=actQueue.length){runEnemyPhase();return;}
+  let actor=actQueue[actQueueIdx];
+  if(actor.stun>0){
+    L(G,actor.name+' 眩晕，跳过行动','debuff');
+    actQueueIdx++;renderBattle();
+    setTimeout(()=>promptNextPlayerAction(),200);
+    return;
+  }
+  showSkillPanel(actor);
+  renderBattle();
+}
+
 function playerSelectSkill(skillIdx){
   if(targetMode)return;
   let actor=actQueue[actQueueIdx];
