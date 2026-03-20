@@ -1443,17 +1443,27 @@ async function testKey(){
     st.className='settings-status err';st.textContent='✗ '+e.message;
   }
 }
+let _aiLastError=0;
 async function geminiCall(prompt){
-  if(!AI_KEY)throw new Error('未设置 API Key');
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${AI_KEY}`,{
+  if(!AI_KEY)throw new Error('NO_KEY');
+  const now=Date.now();
+  if(_aiLastError&&now-_aiLastError<60000)throw new Error('RATE_WAIT:'+(60-Math.floor((now-_aiLastError)/1000)));
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+AI_KEY,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:512}})
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:256}})
   });
-  if(res.status===429)throw new Error('请求过于频繁(429)，请等待1分钟后再试，或使用预设选项');
-  if(!res.ok)throw new Error('API错误 '+res.status);
+  if(res.status===429){_aiLastError=Date.now();throw new Error('RATE_LIMIT');}
+  if(!res.ok)throw new Error('API_ERR:'+res.status);
   const d=await res.json();
   return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+function aiErrorMsg(e){
+  if(e.message==='NO_KEY')return'⚙ 未设置 API Key，请点右上角⚙设置';
+  if(e.message==='RATE_LIMIT')return'⏱ 请求过于频繁，请1分钟后再试（或使用下方预设）';
+  if(e.message.startsWith('RATE_WAIT:')){const s=e.message.split(':')[1];return'⏱ 冷却中，还需 '+s+' 秒（或使用下方预设）';}
+  return'✗ AI错误：'+e.message+' （使用下方预设）';
 }
 
 // ── ZANE EX SKILL HANDLERS ──────────────────────────────────────
@@ -1572,8 +1582,8 @@ async function zaneEXExecSkill2AI(){
     let fn=new Function('G', json.code);
     zaneEXApplyNum(json.label, ()=>fn(G));
   }catch(e){
-    L(G,'AI解析失败：'+e.message,'normal');
-    actQueueIdx++;renderBattle();promptNextPlayerAction();
+    const actor=G.playerTeam.find(x=>x.charId==='zane_ex'&&!x.isDead);
+    const errDiv=document.createElement('div');errDiv.style='color:#ff6644;font-size:.68rem;font-family:var(--fM);margin-top:6px;padding:5px;background:#1a0800;border-left:2px solid #ff6644';errDiv.textContent=aiErrorMsg(e);document.getElementById('action-content').appendChild(errDiv);
   }
 }
 
@@ -1624,8 +1634,8 @@ async function zaneEXExecSkill3AI(){
     let fn=new Function('G', json.code);
     zaneEXApplySetting(json.label, ()=>fn(G));
   }catch(e){
-    L(G,'AI解析失败：'+e.message,'normal');
-    actQueueIdx++;renderBattle();promptNextPlayerAction();
+    const actor=G.playerTeam.find(x=>x.charId==='zane_ex'&&!x.isDead);
+    const errDiv=document.createElement('div');errDiv.style='color:#ff6644;font-size:.68rem;font-family:var(--fM);margin-top:6px;padding:5px;background:#1a0800;border-left:2px solid #ff6644';errDiv.textContent=aiErrorMsg(e);document.getElementById('action-content').appendChild(errDiv);
   }
 }
 
@@ -1703,8 +1713,7 @@ async function zaneEXExecUltAI(){
     let rewriteFn=new Function('me','t','G','aliveAllies','aliveEnemies','D','H','L','ST','B','SH','TD','pick','roll', json.code);
     zaneEXApplyRewrite(json.label, ()=>rewriteFn(me,null,G,aliveAllies,aliveEnemies,D,H,L,ST,B,SH,TD,pick,roll));
   }catch(e){
-    L(G,'AI改写失败：'+e.message,'normal');
-    actQueueIdx++;renderBattle();promptNextPlayerAction();
+    const errDiv=document.createElement('div');errDiv.style='color:#ff6644;font-size:.68rem;font-family:var(--fM);margin-top:6px;padding:5px;background:#1a0800;border-left:2px solid #ff6644';errDiv.textContent=aiErrorMsg(e);document.getElementById('action-content').appendChild(errDiv);
   }
 }
 
