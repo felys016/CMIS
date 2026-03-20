@@ -452,6 +452,11 @@ function D(src,tgt,G,pct,type='body'){
   if(actual<d)msg+=` (护盾减伤)`;
   if(tgt.isDead)msg+=` ☠`;
   L(G,msg,hs?'headshot':'damage');
+  // Shaman mode execute
+  if(!tgt.isDead&&src._shamanMode>0&&tgt.hp/tgt.maxHP<0.15){
+    tgt.hp=0;tgt.isDead=true;
+    L(G,'⚡ 神巫形态斩杀！'+tgt.name+' ☠','death');
+  }
   return d;
 }
 
@@ -1402,7 +1407,154 @@ for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
 // Addy immunity handled in original D() below
 
 const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
-const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_ex'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_ex','edward_ex'];
+
+// ── EDWARD EX ── 天王杯·全能创世形态
+CHARS['edward_ex']={
+  id:'edward_ex',name:'爱德华 EX',rarity:'SP',color:'#ff4400',
+  faction:['生殖隔离','后山兄弟'],desc:'天王杯·心理/愤怒/肾斗士系统',
+  _isEX:true,
+  skills:[
+    {name:'红温',cost:2,trig:2,target:'none',
+     desc:'全体敌人+500愤怒值；被动：爱德华EX不可成为愤怒攻击目标',
+     exec(me,t,G){
+       aliveEnemies(me,G).forEach(e=>{
+         e._rage=(e._rage||0)+500;
+         L(G,e.name+' 愤怒值+'+'500 → '+(e._rage),'special');
+       });
+       me._rageImmune=true;
+       L(G,'爱德华EX 红温！全敌+500愤怒值，自身愤怒免疫','ult');
+     }},
+    {name:'八秒二十四发',cost:3,trig:3,target:'none',
+     desc:'为所有队友施放来一发；自身获得24层肾斗士',
+     exec(me,t,G){
+       aliveAllies(me,G).forEach(a=>{
+         a.stamina=Math.min(a.maxStamina||MAX_STA,a.stamina+1);
+         a.hp=Math.min(a.maxHP,a.hp+Math.floor(a.maxHP*0.45));
+         a.shield=(a.shield||0)+300;
+         a.trigger=Math.min(99,(a.trigger||0)+3);
+         B(a,G,'dmgBonus',0.25,2,'+25%DMG(来一发)',me);
+         L(G,a.name+' 来一发！体力+1护盾+300触发+3','heal');
+       });
+       let kidneyStacks=24;
+       me._kidneyStacks=(me._kidneyStacks||0)+kidneyStacks;
+       let bonus=me._kidneyStacks*0.2;
+       me.buffs=me.buffs.filter(b=>b.label!=='肾斗士');
+       me.buffs.push({type:'dmgBonus',val:bonus,dur:999,label:'肾斗士×'+me._kidneyStacks});
+       recomputeStats(me);
+       L(G,'爱德华EX 八秒二十四发！肾斗士→'+me._kidneyStacks+'层（+'+Math.round(bonus*100)+'%伤）','ult');
+     }},
+    {name:'杀球',cost:2,trig:3,target:'none',
+     desc:'结算敌方愤怒值：每10点=2点真实伤害；自身+1分（⚠暂无效果）',
+     exec(me,t,G){
+       aliveEnemies(me,G).forEach(e=>{
+         let rage=e._rage||0;
+         if(rage>0){
+           let trueDmg=Math.floor(rage/10)*2;
+           if(trueDmg>0){
+             e.hp=Math.max(0,e.hp-trueDmg);
+             if(e.hp<=0)e.isDead=true;
+             L(G,'杀球！'+e.name+' 愤怒'+rage+'点→'+trueDmg+'真伤'+(e.isDead?' ☠':''),'truedmg');
+           }
+           e._rage=0;
+         }
+       });
+       me._score=(me._score||0)+1;
+       L(G,'爱德华EX +1分（当前得分：'+me._score+'）⚠分数暂无额外效果','special');
+     }},
+    {name:'神巫形态',cost:4,trig:4,target:'none',
+     desc:'3回合：使用技能时斩杀HP<15%的角色；所有伤害/吸血+50%',
+     exec(me,t,G){
+       me._shamanMode=3;
+       B(me,G,'dmgBonus',0.5,3,'+50%神巫',me);
+       L(G,'爱德华EX 神巫形态激活！3回合：斩杀<15%HP+伤害+50%','special');
+     }}
+  ],
+  ult:{name:'破防',target:'none',
+   desc:'敌方心理/心理上限-50%；己方攻击附加0.01×伤害的心理伤害（3回合）',
+   exec(me,t,G){
+     aliveEnemies(me,G).forEach(e=>{
+       let maxMind=e._maxMind||100;
+       e._maxMind=Math.floor(maxMind*0.5);
+       e._mind=Math.min(e._mind||maxMind,e._maxMind);
+       L(G,'破防！'+e.name+' 心理上限→'+e._maxMind+' 当前→'+e._mind,'debuff');
+     });
+     aliveAllies(me,G).forEach(a=>{
+       B(a,G,'mindAttack',0.01,3,'破防心理攻击',me);
+     });
+     L(G,'爱德华EX 破防！敌方心理-50%，己方3回合附加心理伤害','ult');
+   }},
+  recall:{name:'新宇宙',
+   desc:'己方愤怒值→1回合伤害增幅(1:1%)；己方心理值→1000且不可减少',
+   exec(me,t,G){
+     aliveAllies(me,G).forEach(a=>{
+       let rage=a._rage||0;
+       if(rage>0){
+         B(a,G,'dmgBonus',rage/100,1,'+'+rage+'%新宇宙',me);
+         L(G,a.name+' 愤怒值'+rage+'→本回合伤害+'+rage+'%','special');
+         a._rage=0;
+       }
+       a._mind=1000;a._maxMind=1000;a._mindLocked=true;
+       L(G,a.name+' 心理值→1000（锁定）','heal');
+     });
+     L(G,'爱德华EX 新宇宙！愤怒转伤害，心理永固','special');
+   }},
+  passive:{desc:'天王杯：全场统一初始设定；心理系统+愤怒值系统；神巫形态斩杀',
+   onBattleStart(me,G){
+     // Apply 天王杯 global stat normalization
+     [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+       c.maxHP=1000;c.hp=1000;c.shield=0;
+       c._mind=100;c._maxMind=100;c._mindLocked=false;
+       c._rage=0;c._rageSource=null;
+       c.dmgBonus=(c.dmgBonus||0);
+       // Edward EX gets 200 base damage via dmgBonus
+       if(c.charId==='edward_ex'){
+         c.buffs.push({type:'dmgBonus',val:1.0,dur:999,label:'天王杯×2伤害'});
+         c.dmgBonus+=1.0;
+       }
+       c.maxStamina=5;c.stamina=5;
+     });
+     G._tianwangCup=true;
+     L(G,'⚠ 天王杯！全场生命→1000，心理→100，愤怒→0，满体力5','passive');
+   },
+   tick(me,G){
+     // Tick shaman mode counter
+     if(me._shamanMode>0)me._shamanMode--;
+     // Tick mind attack buff (already handled by buff system)
+     // Check rage-driven attacks for all characters
+     [...G.playerTeam,...G.enemyTeam].forEach(c=>{
+       if(c.isDead||c.isAbsent)return;
+       // Mental death check: each 10 below 100 = +10% sudden death chance
+       let mind=c._mind||0;
+       if(mind<100&&!c._mindLocked){
+         let deathChance=Math.max(0,(100-mind)/100);
+         if(roll(deathChance)){
+           c.isDead=true;c.hp=0;
+           L(G,'💀 '+c.name+' 心理崩溃暴毙！（心理值'+mind+'）','death');
+         }
+       }
+     });
+   },
+   onAfterAttack(me,src,tgt,dmg,G){
+     // Apply mind damage if buff active
+     if(!tgt||tgt.isDead)return;
+     let mindAtk=src.buffs.find(b=>b.type==='mindAttack');
+     if(mindAtk&&!tgt._mindLocked){
+       let mindDmg=Math.floor(dmg*mindAtk.val);
+       if(mindDmg>0){
+         tgt._mind=Math.max(0,(tgt._mind||0)-mindDmg);
+         L(G,src.name+'→'+tgt.name+' 心理-'+mindDmg+'（剩'+tgt._mind+'）','debuff');
+       }
+     }
+     // Rage accumulation: damage dealt = rage gained on attacker's target
+     if(tgt&&!tgt._rageImmune){
+       tgt._rage=(tgt._rage||0)+dmg;
+       tgt._rageSource=src.id;
+     }
+   }
+  }
+};
+
 let selectedCategory=null;
 
 
