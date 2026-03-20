@@ -1344,7 +1344,7 @@ for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
 // Addy immunity handled in original D() below
 
 const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
-const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp','edward_ex'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp'];
 let selectedCategory=null;
 
 // ═══════════════ GAME STATE ═══════════════
@@ -1786,7 +1786,7 @@ function renderSelectScreen(){
   let otherCat=activeTab==='orig'?'gz':'orig';
   let locked=selectedCategory&&selectedCategory!==activeTab;
   let grid=document.getElementById('char-grid');
-  grid.innerHTML=ids.map(id=>{
+  grid.innerHTML=ids.filter(id=>CHARS[id]).map(id=>{
     let ch=CHARS[id];
     let sel=selectedIds.includes(id);
     let dim=locked&&!sel;
