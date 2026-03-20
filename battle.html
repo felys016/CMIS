@@ -62,6 +62,7 @@ body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:10
 .btn-go{background:#181000;border-color:var(--gold);color:var(--gold);padding:11px 32px;font-size:1rem;font-family:var(--fT);letter-spacing:.25em}
 .btn-go:hover:not(:disabled){background:#251800;border-color:var(--gold2);box-shadow:0 0 12px #d4a84b44}
 .btn-danger{background:#1e0808;border-color:#662222;color:#ff8888;padding:5px 14px;font-size:.75rem}
+.btn-ice{background:#001830;border-color:var(--c1);color:var(--c1);padding:8px 22px;font-size:.82rem}
 .btn-danger:hover{background:#2a0a0a;border-color:#993333}
 
 /* ── BATTLE SCREEN ─────────────────── */
@@ -116,6 +117,32 @@ body{background:var(--bg0);color:var(--text);font-family:var(--fB);min-height:10
 .recall-btn:hover:not(:disabled){background:#110920;border-color:#8855cc;transform:translateY(-2px) translateX(1px)}
 .recall-btn:disabled{opacity:.22;cursor:not-allowed}
 .recall-btn .skill-name{color:#88aadd}
+
+
+/* ── AI SETTINGS PANEL ────────── */
+.settings-btn{position:absolute;right:54px;top:50%;transform:translateY(-50%);background:none;border:1px solid var(--border2);color:var(--dim);width:28px;height:28px;cursor:pointer;font-size:.75rem;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.settings-btn:hover{border-color:var(--c1);color:var(--c1)}
+.settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.settings-overlay.open{display:flex}
+.settings-panel{background:var(--bg2);border:1px solid var(--border2);width:min(420px,92vw);padding:20px;position:relative}
+.settings-panel h2{font-family:var(--fT);font-size:1.4rem;letter-spacing:.3em;color:var(--c1);margin-bottom:16px}
+.settings-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.settings-label{font-size:.75rem;color:var(--dim);font-family:var(--fM);flex-shrink:0;width:80px}
+.settings-input{flex:1;background:var(--bg1);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:var(--fM);font-size:.72rem;outline:none}
+.settings-input:focus{border-color:var(--c1)}
+.settings-toggle{width:36px;height:18px;background:var(--border);border-radius:9px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.settings-toggle.on{background:var(--green)}
+.settings-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s}
+.settings-toggle.on::after{left:20px}
+.settings-status{font-size:.65rem;font-family:var(--fM);margin-top:4px}
+.settings-status.ok{color:var(--green)}.settings-status.err{color:var(--red)}
+.ai-input-wrap{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.ai-input-box{background:var(--bg1);border:1px solid var(--c1);color:var(--text);padding:8px 10px;font-family:var(--fM);font-size:.72rem;outline:none;resize:none;height:60px}
+.ai-thinking{color:var(--c1);font-family:var(--fM);font-size:.7rem;animation:gpulse .8s ease-in-out infinite alternate}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.preset-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fM);text-align:left;transition:all .15s}
+.preset-btn:hover{border-color:var(--c1);color:var(--c1)}
+.zane-ex-panel{display:flex;flex-direction:column;gap:6px}
 
 @keyframes gpulse{from{opacity:.7;box-shadow:none}to{opacity:1;box-shadow:0 0 6px #d4a84b88}}
 
@@ -308,6 +335,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <div class="battle-header">
     <div class="round-badge" id="round-label">⚔ ROUND 1</div>
     <div class="hdr-title">清迈国际格斗</div>
+    <button class="settings-btn" onclick="openSettings()" title="AI设置">⚙</button>
     <button class="btn btn-danger" onclick="resetGame()">重置</button>
   </div>
   <div class="teams-wrapper">
@@ -324,6 +352,31 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <div class="action-panel" id="action-panel">
     <div class="action-title">ACTION</div>
     <div id="action-content">准备中...</div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-panel">
+    <h2>AI 设置</h2>
+    <div class="settings-row">
+      <span class="settings-label">AI 开关</span>
+      <div class="settings-toggle" id="ai-toggle" onclick="toggleAI()"></div>
+      <span id="ai-toggle-label" style="font-size:.7rem;color:var(--dim);font-family:var(--fM)">已关闭</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Gemini Key</span>
+      <input class="settings-input" id="api-key-input" type="password" placeholder="AIza..." oninput="saveKey()"/>
+    </div>
+    <div id="key-status" class="settings-status"></div>
+    <div style="font-size:.62rem;color:var(--dim);font-family:var(--fM);margin-top:8px;line-height:1.6">
+      免费 Gemini Flash API · 100万token/天<br>
+      申请地址：<span style="color:var(--c1)">aistudio.google.com</span> → Get API Key
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-go" style="font-size:.8rem;padding:7px 20px" onclick="testKey()">测试连接</button>
+      <button class="btn" style="margin-left:8px;font-size:.8rem" onclick="closeSettings()">关闭</button>
+    </div>
   </div>
 </div>
 
@@ -380,14 +433,19 @@ function L(G,msg,type='normal'){G.log.push({msg,type,round:G.round});}
 function D(src,tgt,G,pct,type='body'){
   if(!tgt||tgt.isDead||tgt.isAbsent)return 0;
   if(tgt._physicMagicImmune&&(type==='body'||type==='magic')){L(G,`${tgt.name} 免疫体术/法术！`,'dodge');return 0;}
-  if(roll(DODGE_RATE)){L(G,`${tgt.name} 躲开了 ${src.name} 的攻击！`,'dodge');return 0;}
+  // Stun immunity (Zane EX setting)
+  // Dodge override
+  let dodgeRate=G&&G._dodgeOverride!==undefined?G._dodgeOverride:DODGE_RATE;
+  if(roll(dodgeRate)){L(G,`${tgt.name} 躲开了 ${src.name} 的攻击！`,'dodge');return 0;}
   let d=BASE_DMG*pct/100;
   d*=(1+(src.dmgBonus||0));
   if(type==='body')d*=(1+(src.atkBonus||0));
   d*=(1+(tgt.vuln||0));
   if(type==='magic')d*=(1+(tgt.magicVuln||0));
-  let hs=roll(HS_RATE);
+  let hsRate=G&&G._hsOverride!==undefined?G._hsOverride:HS_RATE;
+  let hs=roll(hsRate);
   if(hs)d*=HS_MULT;
+  if(G&&G._dmgMult&&G._dmgMult!==1)d*=G._dmgMult;
   d=Math.round(d);
   let actual=applyDmg(tgt,d);
   let msg=`${src.name} → ${tgt.name}: ${d}${type==='body'?'体':'法'} dmg${hs?' 💥爆头!':''}`;
@@ -397,9 +455,10 @@ function D(src,tgt,G,pct,type='body'){
   return d;
 }
 
-function applyDmg(tgt,d){
+function applyDmg(tgt,d,G){
   if(tgt.shield>0){
-    let eff=Math.floor(d/2);
+    let shieldRate=G&&G._shieldBlock!==undefined?G._shieldBlock:0.5;
+    let eff=Math.floor(d*shieldRate);
     if(tgt.shield>=eff){tgt.shield-=eff;return 0;}
     else{let o=eff-tgt.shield;tgt.shield=0;tgt.hp=Math.max(0,tgt.hp-o);if(tgt.hp<=0)tgt.isDead=true;return o;}
   }
@@ -431,7 +490,9 @@ function H(tgt,G,pct,src){
 function SH(tgt,G,amt,src){
   if(!tgt||tgt.isDead)return;
   tgt.shield+=amt;
-  if(src)L(G,`${src.name} → ${tgt.name}: +${amt} 护盾`,'buff');
+  // Apply global shield cap if Zane EX passive active
+  if(G&&G._globalShieldCap&&tgt.shield>G._globalShieldCap)tgt.shield=G._globalShieldCap;
+  if(src)L(G,`${src.name} → ${tgt.name}: +${amt} 护盾${G&&G._globalShieldCap?' (上限'+G._globalShieldCap+')':''}`, 'buff');
 }
 
 function B(tgt,G,type,val,dur,label,src){
@@ -443,6 +504,7 @@ function B(tgt,G,type,val,dur,label,src){
 
 function ST(tgt,G,rounds,src){
   if(!tgt||tgt.isDead)return;
+  if(tgt._stunImmune>0){L(G,`${tgt.name} 眩晕免疫！`,'dodge');return;}
   tgt.stun=Math.max(tgt.stun||0,rounds);
   L(G,`${tgt.name} 被眩晕 ${rounds} 回合！`,'debuff');
 }
@@ -1300,42 +1362,38 @@ const GZ_CHARS = {
       }}
   },
 
-  // ── ZANE SP ── 通灵宗师·突破形态
-  zane_sp:{
-    id:'zane_sp',name:'Zane SP',rarity:'SP',color:'#4e99ff',faction:['生殖隔离','后山兄弟'],desc:'通灵宗师/领域强化',
+  // ── ZANE EX ── The Creator (1/4) 后山兄弟创世形态
+  zane_ex:{
+    id:'zane_ex',name:'Zane EX',rarity:'SP',color:'#00d4ff',faction:['生殖隔离','后山兄弟'],desc:'The Creator · 全能 · 创世形态1/4',
+    _isEX:true,
     skills:[
-      {name:'通灵·强化',cost:1,trig:2,target:'ally',desc:'队友+25%伤害2回合+1体力',
-        exec(me,t,G){B(t,G,'dmgBonus',0.25,2,'+25%通灵',me);t.stamina=Math.min(MAX_STA,t.stamina+1);L(G,`Zane SP 通灵强化！${t.name}+25%伤+1体力`,'special');}},
-      {name:'记忆封印',cost:2,trig:3,target:'enemy',desc:'目标触发值归零+沉默2回合',
-        exec(me,t,G){t.trigger=0;t.silenced=2;L(G,`Zane SP 封印记忆！${t.name}触发归零+沉默2回`,'special');}},
-      {name:'后山齐攻',cost:3,trig:4,target:'none',desc:'全体150%法术，后山兄弟在场每人+30%',
-        exec(me,t,G){
-          let backhill=['zane','harrison','lucas','vincent','edward_sp','zane_sp'];
-          let cnt=aliveAllies(me,G).filter(a=>backhill.includes(a.charId)).length;
-          let mult=1.5+cnt*0.3;
-          aliveEnemies(me,G).forEach(e=>D(me,e,G,mult*100,'magic'));
-          L(G,`Zane SP 后山齐攻！${Math.round(mult*100)}%法伤（后山×${cnt}）`,'special');}}
+      {name:'技能',cost:2,trig:2,target:'none',desc:'复制场上任意非EX角色的任意技能并立即使用',
+        exec(me,t,G){zaneEXSkill1(me,G);}},
+      {name:'数值',cost:3,trig:3,target:'none',desc:'将场上任意基础数值更改（全场生效）',
+        exec(me,t,G){zaneEXSkill2(me,G);}},
+      {name:'设定',cost:4,trig:4,target:'none',desc:'增加或减少一个战场设定（免疫/规则/属性）',
+        exec(me,t,G){zaneEXSkill3(me,G);}}
     ],
-    ult:{name:'领域展开·后山兄弟之地',target:'none',desc:'全队+30%伤+15%HP，对全敌造成250%法伤+触发值-3',
+    ult:{name:'改写',target:'none',desc:'改写任意非EX角色的任意技能，效果持续1回合（禁止修改秒杀概率/50%+真伤/印记）',
+      exec(me,t,G){zaneEXUlt(me,G);}},
+    recall:{name:'创世伊始',desc:'撤销所有数值/设定改写，全场HP%/体力/触发值保留',
       exec(me,t,G){
-        aliveAllies(me,G).forEach(a=>{B(a,G,'dmgBonus',0.3,3,'+30%后山域',me);H(a,G,15,me);});
-        aliveEnemies(me,G).forEach(e=>{D(me,e,G,250,'magic');e.trigger=Math.max(0,e.trigger-3);});
-        L(G,'Zane SP 后山兄弟之地！全队增益+全敌250%！','ult');}},
-    recall:{name:'里香·真情告白',desc:'队友最低血量者满血复活，自身触发+5',
-      exec(me,t,G){
-        let lowest=aliveAllies(me,G).sort((a,b)=>a.hp-b.hp)[0];
-        if(lowest){lowest.hp=lowest.maxHP;L(G,`Zane SP 真情告白！${lowest.name}满血！`,'heal');}
-        me.trigger=Math.min(99,me.trigger+5);
-        L(G,'Zane SP 回想！触发+5','special');}},
-    passive:{desc:'后山兄弟同场：伤害+5%/人（最多+20%）',
-      onBattleStart(me,G){
-        let backhill=['zane','harrison','lucas','vincent','edward_sp'];
-        let cnt=myTeam(me,G).filter(a=>backhill.includes(a.charId)).length;
-        if(cnt>0){
-          me.buffs.push({type:'dmgBonus',val:cnt*0.05,dur:999,label:`+后山×${cnt}×5%`});
-          me.dmgBonus=(me.dmgBonus||0)+cnt*0.05;
-          L(G,`Zane SP 后山羁绊：+${cnt*5}%伤害`,'passive');
+        if(G._zaneExChanges&&G._zaneExChanges.length>0){
+          G._zaneExChanges.forEach(fn=>{try{fn();}catch(e){}});
+          G._zaneExChanges=[];
+          L(G,'↺ Zane EX 创世伊始！所有改写已撤销','special');
+        } else {
+          L(G,'Zane EX 创世伊始：无改写记录','normal');
         }
+      }},
+    passive:{desc:'全场护盾上限500（战斗开始时生效）；后山创世者全队同场时解锁技能四·模板（无限制）',
+      onBattleStart(me,G){
+        G._zaneExChanges=G._zaneExChanges||[];
+        // Apply global shield cap 500
+        G._globalShieldCap=500;
+        L(G,'Zane EX 被动：全场护盾上限→500！','passive');
+        // Check for Skill 4 unlock (other EX backhill members - locked for now)
+        me._skill4Unlocked=false;
       }}
   }
 };
@@ -1344,87 +1402,297 @@ for(let id in GZ_CHARS)CHARS[id]=GZ_CHARS[id];
 // Addy immunity handled in original D() below
 
 const ORIG_IDS=['zane','harrison','charlotte','lucas','vincent','jake','cici','feliz','michelle','trex','jeff','lj','madame','woojoo','chogun'];
-const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_sp'];
+const GZ_IDS=['miqie2','edward_sp','luoda','toma','greg','addy','zane_ex'];
 let selectedCategory=null;
 
-// ═══════════════ GAME STATE ═══════════════
-let G = null;
-let actQueue = [];
-let actQueueIdx = 0;
-let targetMode = null; // {actorId, skillIdx}
 
-function createCombatant(charId, isPlayer){
-  let ch=CHARS[charId];
-  return {
-    id:charId+(isPlayer?'_p':'_e'),charId,isPlayer,
-    name:ch.name,rarity:ch.rarity,color:ch.color,faction:ch.faction||[],
-    maxHP:MAX_HP,hp:MAX_HP,shield:0,
-    stamina:START_STA,trigger:0,
-    buffs:[],isDead:false,isAbsent:false,absentTimer:0,stun:0,betray:0,silenced:0,
-    dmgBonus:0,atkBonus:0,dmgReduction:0,vuln:0,magicVuln:0,bonusSta:0,
-    gpa:0,enhanced:false,fries:0,_pc:0,recallUsed:false,perfection:0
-  };
+// ═══════════════ AI ENGINE (GEMINI) ═══════════════
+let AI_ENABLED = false;
+let AI_KEY = '';
+
+function loadAISettings(){
+  AI_KEY = localStorage.getItem('cmis_gemini_key')||'';
+  AI_ENABLED = localStorage.getItem('cmis_ai_enabled')==='true';
+  const inp = document.getElementById('api-key-input');
+  if(inp) inp.value = AI_KEY;
+  const tog = document.getElementById('ai-toggle');
+  const lbl = document.getElementById('ai-toggle-label');
+  if(tog){ tog.className='settings-toggle'+(AI_ENABLED?' on':''); }
+  if(lbl){ lbl.textContent=AI_ENABLED?'已开启':'已关闭'; }
 }
-
-function initGame(playerIds, enemyIds){
-  G={
-    round:1,
-    playerTeam:playerIds.map(id=>createCombatant(id,true)),
-    enemyTeam:enemyIds.map(id=>createCombatant(id,false)),
-    log:[],winner:null
-  };
-  // Run battle-start passives
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    let ch=CHARS[c.charId];
-    if(ch.passive&&ch.passive.onBattleStart)ch.passive.onBattleStart(c,G);
+function saveKey(){
+  AI_KEY = document.getElementById('api-key-input').value;
+  localStorage.setItem('cmis_gemini_key', AI_KEY);
+  document.getElementById('key-status').textContent='';
+}
+function toggleAI(){
+  AI_ENABLED=!AI_ENABLED;
+  localStorage.setItem('cmis_ai_enabled', AI_ENABLED);
+  loadAISettings();
+}
+function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadAISettings(); }
+function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
+function closeSettingsOutside(e){ if(e.target.id==='settings-overlay')closeSettings(); }
+async function testKey(){
+  const st=document.getElementById('key-status');
+  st.className='settings-status';st.textContent='测试中...';
+  try{
+    const r=await geminiCall('用一个字回答：你好吗？');
+    st.className='settings-status ok';st.textContent='✓ 连接成功：'+r.slice(0,20);
+  }catch(e){
+    st.className='settings-status err';st.textContent='✗ '+e.message;
+  }
+}
+async function geminiCall(prompt){
+  if(!AI_KEY)throw new Error('未设置 API Key');
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${AI_KEY}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:512}})
   });
-  L(G,'═══ 战斗开始！ ═══','win');
-  L(G,`我方: ${G.playerTeam.map(c=>c.name).join(' / ')} vs 对手: ${G.enemyTeam.map(c=>c.name).join(' / ')}`,'normal');
+  if(!res.ok)throw new Error(`API错误 ${res.status}`);
+  const d=await res.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
 }
 
-// ═══════════════ ROUND LOGIC ═══════════════
-function startRound(){
-  L(G,`─── 第 ${G.round} 回合 ───`,'log-round-sep');
+// ── ZANE EX SKILL HANDLERS ──────────────────────────────────────
+function zaneEXSkill1(me, G){
+  // Build list of non-EX chars on field with their skills
+  let allChars=[...G.playerTeam,...G.enemyTeam].filter(c=>!c.isDead&&!c.isAbsent&&c.id!==me.id);
+  let nonEX=allChars.filter(c=>!CHARS[c.charId]?._isEX);
+  if(!nonEX.length){L(G,'Zane EX：没有可复制的目标','normal');return;}
   
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(c.isAbsent){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.absentTick)ch.passive.absentTick(c,G);}
+  // Build options
+  let opts=[];
+  nonEX.forEach(char=>{
+    let ch=CHARS[char.charId];
+    ch.skills.forEach((sk,i)=>opts.push({label:`${char.name}·${sk.name}`,char,sk,i}));
+    if(ch.recall&&!char.recallUsed)opts.push({label:`${char.name}·[回想]${ch.recall.name}`,char,sk:ch.recall,i:'recall'});
   });
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(c.isAbsent&&!c.isDead){c.absentTimer--;
-      if(c.absentTimer<=0){c.isAbsent=false;let ch=CHARS[c.charId];
-        if(ch.passive&&ch.passive.onReturn)ch.passive.onReturn(c,G);
-        else L(G,`${c.name} 回到场上`,'passive');}}
+  
+  // Show picker in action panel
+  let html=`<div class="action-title">技能 ── 选择要复制的技能</div><div class="zane-ex-panel">`;
+  opts.forEach((o,idx)=>{
+    html+=`<button class="skill-btn" onclick="zaneEXExecSkill1(${idx})" style="margin-bottom:3px">
+      <div class="skill-name">${o.label}</div>
+      <div class="skill-desc">${o.sk.desc||''}</div>
+    </button>`;
   });
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead){let ch=CHARS[c.charId];if(ch.passive&&ch.passive.tick)ch.passive.tick(c,G);}
-  });
-  [...G.playerTeam,...G.enemyTeam].forEach(c=>{
-    if(!c.isDead&&!c.isAbsent)c.stamina=Math.min(MAX_STA,c.stamina+STA_REGEN+(c.bonusSta||0));
-  });
+  html+=`<button class="btn" style="margin-top:4px" onclick="renderBattle();promptNextPlayerAction()">取消</button></div>`;
+  document.getElementById('action-content').innerHTML=html;
+  G._zaneEx_s1_opts=opts;
+}
 
-  actQueue=G.playerTeam.filter(c=>!c.isDead&&!c.isAbsent);
-  actQueueIdx=0;
-  targetMode=null;
+function zaneEXExecSkill1(idx){
+  let opts=G._zaneEx_s1_opts;
+  if(!opts||!opts[idx])return;
+  let {char,sk,i}=opts[idx];
+  let actor=G.playerTeam.find(c=>c.charId==='zane_ex'&&!c.isDead);
+  if(!actor)return;
+  L(G,`Zane EX 复制「${char.name}·${sk.name}」！`,'special');
+  // Execute the copied skill - need a target
+  let target=null;
+  if(sk.target==='enemy'){
+    let es=aliveEnemies(actor,G);
+    if(es.length)target=es[0]; // AI or auto-pick lowest HP
+    else{L(G,'无敌方目标','normal');return;}
+  } else if(sk.target==='ally'){
+    let al=aliveAllies(actor,G).filter(a=>a.id!==actor.id);
+    if(al.length)target=al[0];
+  }
+  try{sk.exec(actor,target,G);}catch(e){L(G,'技能执行出错：'+e.message,'normal');}
+  checkDeaths();
+  actQueueIdx++;
   renderBattle();
   promptNextPlayerAction();
 }
 
-function promptNextPlayerAction(){
-  if(checkWin())return;
-  if(actQueueIdx>=actQueue.length){
-    runEnemyPhase();
-    return;
+async function zaneEXSkill2(me, G){
+  // Show input UI
+  let html=`<div class="action-title">数值 ── 更改战场基础数值</div><div class="zane-ex-panel">`;
+  if(AI_ENABLED){
+    html+=`<div class="ai-input-wrap">
+      <div style="font-size:.65rem;color:var(--dim);font-family:var(--fM)">用自然语言描述数值改变（AI解析）</div>
+      <textarea class="ai-input-box" id="zex-s2-input" placeholder="例：把所有人最大生命值改成500 / 把爱德华的基础伤害×5..."></textarea>
+      <button class="btn btn-go" style="font-size:.8rem;padding:7px" onclick="zaneEXExecSkill2AI()">✦ AI 解析并执行</button>
+    </div><div style="font-size:.62rem;color:var(--dim);font-family:var(--fM);margin:6px 0">── 或选择预设 ──</div>`;
   }
-  let actor=actQueue[actQueueIdx];
-  if(actor.stun>0){
-    L(G,`${actor.name} 眩晕，跳过行动`,'debuff');
-    actQueueIdx++;
-    renderBattle();
-    setTimeout(()=>promptNextPlayerAction(),200);
-    return;
-  }
-  showSkillPanel(actor);
+  html+=`<div class="preset-grid">
+    <button class="preset-btn" onclick="zaneEXApplyNum('全体最大HP→2000',()=>{[...G.playerTeam,...G.enemyTeam].forEach(c=>{let pct=c.hp/c.maxHP;c.maxHP=2000;c.hp=Math.round(pct*2000);})})">全体最大HP → 2000</button>
+    <button class="preset-btn" onclick="zaneEXApplyNum('全体最大HP→500',()=>{[...G.playerTeam,...G.enemyTeam].forEach(c=>{let pct=c.hp/c.maxHP;c.maxHP=500;c.hp=Math.round(pct*500);})})">全体最大HP → 500</button>
+    <button class="preset-btn" onclick="zaneEXApplyNum('基础伤害×3',()=>{G._dmgMult=(G._dmgMult||1)*3;})">全体基础伤害 × 3</button>
+    <button class="preset-btn" onclick="zaneEXApplyNum('基础伤害÷3',()=>{G._dmgMult=(G._dmgMult||1)/3;})">全体基础伤害 ÷ 3</button>
+    <button class="preset-btn" onclick="zaneEXApplyNum('触发值上限→5',()=>{G._triggerMax=5;})">触发值上限 → 5</button>
+    <button class="preset-btn" onclick="zaneEXApplyNum('体力上限→3',()=>{[...G.playerTeam,...G.enemyTeam].forEach(c=>{c.maxStamina=3;c.stamina=Math.min(c.stamina,3);});})">体力上限 → 3</button>
+  </div>
+  <button class="btn" style="margin-top:6px" onclick="renderBattle();promptNextPlayerAction()">取消</button></div>`;
+  document.getElementById('action-content').innerHTML=html;
+}
+
+function zaneEXApplyNum(label, fn){
+  let actor=G.playerTeam.find(c=>c.charId==='zane_ex'&&!c.isDead);
+  // Store undo function
+  G._zaneExChanges=G._zaneExChanges||[];
+  // Snapshot before
+  let snap=[...G.playerTeam,...G.enemyTeam].map(c=>({c,maxHP:c.maxHP,hp:c.hp,stamina:c.stamina,maxStamina:c.maxStamina}));
+  let prevMult=G._dmgMult, prevTrig=G._triggerMax;
+  G._zaneExChanges.push(()=>{
+    snap.forEach(s=>{s.c.maxHP=s.maxHP;s.c.hp=Math.min(s.c.hp,s.maxHP);s.c.stamina=Math.min(s.c.stamina,s.maxStamina);s.c.maxStamina=s.maxStamina;});
+    G._dmgMult=prevMult;G._triggerMax=prevTrig;
+  });
+  fn();
+  L(G,`Zane EX 数值改写：${label}`,'special');
+  checkDeaths();
+  actQueueIdx++;
   renderBattle();
+  promptNextPlayerAction();
+}
+
+async function zaneEXExecSkill2AI(){
+  let input=document.getElementById('zex-s2-input')?.value?.trim();
+  if(!input)return;
+  let el=document.getElementById('action-content');
+  el.innerHTML+='<div class="ai-thinking">✦ AI 解析中...</div>';
+  try{
+    let battleState2=[...G.playerTeam,...G.enemyTeam].filter(c=>!c.isDead).map(c=>c.name+'('+(c.isPlayer?'玩家':'敌方')+'): HP='+c.hp+'/'+c.maxHP+', STA='+c.stamina+', TRIG='+c.trigger).join('\n');
+    let prompt='你是清迈国际格斗战斗模拟器的AI裁判。玩家输入了一个数值改写指令。请将以下指令转化为简短描述（中文，≤15字）和JavaScript代码片段。禁止：秒杀、设置HP为0。指令：'+input+'\n严格JSON格式：{"label":"描述","code":"js代码"}';
+    let resp=await geminiCall(prompt);
+    let json=JSON.parse(resp.replace(/[^{]*({.*})[^}]*/s,'$1'));
+    let fn=new Function('G', json.code);
+    zaneEXApplyNum(json.label, ()=>fn(G));
+  }catch(e){
+    L(G,'AI解析失败：'+e.message,'normal');
+    actQueueIdx++;renderBattle();promptNextPlayerAction();
+  }
+}
+
+async function zaneEXSkill3(me, G){
+  let html=`<div class="action-title">设定 ── 增加/减少一个战场规则</div><div class="zane-ex-panel">`;
+  if(AI_ENABLED){
+    html+=`<div class="ai-input-wrap">
+      <div style="font-size:.65rem;color:var(--dim);font-family:var(--fM)">描述你想添加或移除的设定</div>
+      <textarea class="ai-input-box" id="zex-s3-input" placeholder="例：所有人本回合免疫眩晕 / 闪避率变成50% / 禁止使用大招..."></textarea>
+      <button class="btn btn-go" style="font-size:.8rem;padding:7px" onclick="zaneEXExecSkill3AI()">✦ AI 解析并执行</button>
+    </div><div style="font-size:.62rem;color:var(--dim);font-family:var(--fM);margin:6px 0">── 或选择预设 ──</div>`;
+  }
+  html+=`<div class="preset-grid">
+    <button class="preset-btn" onclick="zaneEXApplySetting('全场眩晕免疫2回',()=>{[...G.playerTeam,...G.enemyTeam].forEach(c=>c._stunImmune=2);})">全场眩晕免疫 2回</button>
+    <button class="preset-btn" onclick="zaneEXApplySetting('闪避率→50%',()=>{G._dodgeOverride=0.5;})">闪避率 → 50%</button>
+    <button class="preset-btn" onclick="zaneEXApplySetting('禁用大招1回',()=>{G._ultBanned=1;})">禁止大招 1回</button>
+    <button class="preset-btn" onclick="zaneEXApplySetting('护盾减伤→0%',()=>{G._shieldBlock=0;})">护盾减伤 → 0%</button>
+    <button class="preset-btn" onclick="zaneEXApplySetting('爆头率→50%',()=>{G._hsOverride=0.5;})">爆头率 → 50%</button>
+    <button class="preset-btn" onclick="zaneEXApplySetting('体力不消耗1回',()=>{G._noStaCost=1;})">技能无体力消耗 1回</button>
+  </div>
+  <button class="btn" style="margin-top:6px" onclick="renderBattle();promptNextPlayerAction()">取消</button></div>`;
+  document.getElementById('action-content').innerHTML=html;
+}
+
+function zaneEXApplySetting(label, fn){
+  G._zaneExChanges=G._zaneExChanges||[];
+  let snap={dodgeOverride:G._dodgeOverride,shieldBlock:G._shieldBlock,hsOverride:G._hsOverride,ultBanned:G._ultBanned,noStaCost:G._noStaCost};
+  let stunSnap=[...G.playerTeam,...G.enemyTeam].map(c=>({c,si:c._stunImmune}));
+  G._zaneExChanges.push(()=>{
+    Object.assign(G,{_dodgeOverride:snap.dodgeOverride,_shieldBlock:snap.shieldBlock,_hsOverride:snap.hsOverride,_ultBanned:snap.ultBanned,_noStaCost:snap.noStaCost});
+    stunSnap.forEach(s=>s.c._stunImmune=s.si);
+  });
+  fn();
+  L(G,`Zane EX 设定：${label}`,'special');
+  actQueueIdx++;renderBattle();promptNextPlayerAction();
+}
+
+async function zaneEXExecSkill3AI(){
+  let input=document.getElementById('zex-s3-input')?.value?.trim();
+  if(!input)return;
+  let el=document.getElementById('action-content');
+  el.innerHTML+='<div class="ai-thinking">✦ AI 解析中...</div>';
+  try{
+    let p='你是清迈国际格斗AI裁判。玩家要修改战场规则。G对象可用：_dodgeOverride(闪避率数字), _shieldBlock(护盾减伤0-1), _hsOverride(爆头率), _ultBanned(禁大招回合数), _noStaCost(无体力消耗回合数), _globalShieldCap(护盾上限)。角色有_stunImmune(眩晕免疫回合数)。禁止设HP为0或删角色。指令：'+input+' 严格JSON格式（仅返回JSON）：{"label":"描述","code":"G._xxx=..."}';
+    let resp=await geminiCall(p);
+    let json=JSON.parse(resp.replace(/[^{]*({[^{}]*})[^}]*/,'$1').trim());
+    let fn=new Function('G', json.code);
+    zaneEXApplySetting(json.label, ()=>fn(G));
+  }catch(e){
+    L(G,'AI解析失败：'+e.message,'normal');
+    actQueueIdx++;renderBattle();promptNextPlayerAction();
+  }
+}
+
+async function zaneEXUlt(me, G){
+  let targets=[...G.playerTeam,...G.enemyTeam].filter(c=>!c.isDead&&!c.isAbsent&&!CHARS[c.charId]?._isEX&&c.id!==me.id);
+  let html=`<div class="action-title">改写 ── 选择目标角色和技能</div><div class="zane-ex-panel">`;
+  targets.forEach((char,ci)=>{
+    let ch=CHARS[char.charId];
+    html+=`<div style="font-size:.7rem;color:var(--dim);font-family:var(--fM);margin:4px 0 2px">${char.name} (${char.isPlayer?'我方':'敌方'})</div>`;
+    ch.skills.forEach((sk,si)=>{
+      html+=`<button class="preset-btn" onclick="zaneEXRewritePick(${ci},${si})">${sk.name} — ${sk.desc}</button>`;
+    });
+    html+=`<button class="preset-btn" style="border-color:#332244" onclick="zaneEXRewritePick(${ci},'ult')">[大招] ${ch.ult.name}</button>`;
+  });
+  html+=`<button class="btn" style="margin-top:6px" onclick="renderBattle();promptNextPlayerAction()">取消</button></div>`;
+  document.getElementById('action-content').innerHTML=html;
+  G._zexUltTargets=targets;
+}
+
+function zaneEXRewritePick(ci, si){
+  let targets=G._zexUltTargets;
+  let char=targets[ci];
+  let ch=CHARS[char.charId];
+  let sk=si==='ult'?ch.ult:ch.skills[si];
+  G._zexRewriteTarget={char,sk,si};
+  
+  let html=`<div class="action-title">改写 ── 改写「${char.name}·${sk.name}」为？</div><div class="zane-ex-panel">`;
+  if(AI_ENABLED){
+    html+=`<div class="ai-input-wrap">
+      <div style="font-size:.65rem;color:var(--dim);font-family:var(--fM)">描述改写后的效果（禁止：秒杀/50%+真伤/印记）</div>
+      <textarea class="ai-input-box" id="zex-ult-input" placeholder="例：变成给己方全体回复50%HP / 变成对所有人造成100%法术伤害..."></textarea>
+      <button class="btn btn-go" style="font-size:.8rem;padding:7px" onclick="zaneEXExecUltAI()">✦ AI 改写并执行</button>
+    </div><div style="font-size:.62rem;color:var(--dim);font-family:var(--fM);margin:6px 0">── 或选择预设改写 ──</div>`;
+  }
+  html+=`<div class="preset-grid">
+    <button class="preset-btn" onclick="zaneEXApplyRewrite('变为：全队回50%HP',()=>{aliveAllies(G.playerTeam.find(c=>c.charId==='zane_ex'),G).forEach(a=>H(a,G,50,null));})">变为：全队回50%HP</button>
+    <button class="preset-btn" onclick="zaneEXApplyRewrite('变为：全体100%法伤',()=>{aliveEnemies(G.playerTeam.find(c=>c.charId==='zane_ex'),G).forEach(e=>D(G.playerTeam.find(c=>c.charId==='zane_ex'),e,G,100,'magic'));})">变为：全体100%法伤</button>
+    <button class="preset-btn" onclick="zaneEXApplyRewrite('变为：眩晕自身',()=>{let t=G._zexRewriteTarget?.char;if(t)ST(t,G,2,null);})">变为：眩晕使用者2回</button>
+    <button class="preset-btn" onclick="zaneEXApplyRewrite('变为：什么都不发生',()=>{})">变为：空技能（什么都不发生）</button>
+  </div>
+  <button class="btn" style="margin-top:4px" onclick="zaneEXUlt(G.playerTeam.find(c=>c.charId==='zane_ex'),G)">← 返回</button></div>`;
+  document.getElementById('action-content').innerHTML=html;
+}
+
+function zaneEXApplyRewrite(label, rewriteFn){
+  let {char,sk,si}=G._zexRewriteTarget;
+  let ch=CHARS[char.charId];
+  let origExec=sk.exec.bind(sk);
+  // Override for 1 turn
+  sk.exec=function(me,t,Gx){
+    rewriteFn();
+    L(Gx,`[改写] ${char.name}·${sk.name}：${label}`,'special');
+  };
+  // Restore after next use or end of round
+  G._zaneExChanges=G._zaneExChanges||[];
+  G._zaneExChanges.push(()=>{ sk.exec=origExec; });
+  setTimeout(()=>{sk.exec=origExec;},30000); // auto-restore after 30s max
+  L(G,`Zane EX 改写「${char.name}·${sk.name}」→ ${label}！`,'ult');
+  actQueueIdx++;renderBattle();promptNextPlayerAction();
+}
+
+async function zaneEXExecUltAI(){
+  let input=document.getElementById('zex-ult-input')?.value?.trim();
+  if(!input)return;
+  let {char,sk}=G._zexRewriteTarget;
+  let el=document.getElementById('action-content');
+  el.innerHTML+='<div class="ai-thinking">✦ AI 改写中...</div>';
+  try{
+    let me=G.playerTeam.find(c=>c.charId==='zane_ex');
+    let ws=G.playerTeam.concat(G.enemyTeam).filter(c=>!c.isDead).map(c=>c.name+'('+(c.isPlayer?'我方':'敌方')+'):'+c.hp+'/'+c.maxHP).join(', ');
+    let p='清迈国际格斗AI裁判。Zane EX改写技能。战场：'+ws+'。被改写：'+char.name+'的'+sk.name+'。改写要求：'+input+'。可用函数：D(src,tgt,G,pct,type), H(tgt,G,pct,src), L(G,msg,type), ST(tgt,G,rnd,src), B(tgt,G,type,val,dur,lbl,src), SH(tgt,G,amt,src), TD(src,tgt,G,pct)。G.playerTeam/G.enemyTeam可访问。禁止：isDead=true，50%+真伤。返回严格JSON：{"label":"描述≤15字","code":"函数体，参数me,t,G,aliveAllies,aliveEnemies,D,H,L,ST,B,SH,TD,pick,roll"}';
+    let resp=await geminiCall(p);
+    let json=JSON.parse(resp.replace(/[^{]*({[^{}]*})[^}]*/,'$1').trim());
+    let rewriteFn=new Function('me','t','G','aliveAllies','aliveEnemies','D','H','L','ST','B','SH','TD','pick','roll', json.code);
+    zaneEXApplyRewrite(json.label, ()=>rewriteFn(me,null,G,aliveAllies,aliveEnemies,D,H,L,ST,B,SH,TD,pick,roll));
+  }catch(e){
+    L(G,'AI改写失败：'+e.message,'normal');
+    actQueueIdx++;renderBattle();promptNextPlayerAction();
+  }
 }
 
 function playerSelectSkill(skillIdx){
@@ -1479,7 +1747,7 @@ function executePlayerAction(actor,skillIdx,targetId){
     L(G,`★ ${actor.name} 大招：${skill.name}！`,'ult');
     skill.exec(actor,target,G);
   } else {
-    actor.stamina-=skill.cost;
+    if(!(G&&G._noStaCost>0))actor.stamina-=skill.cost;
     actor.trigger=Math.min(99,actor.trigger+skill.trig);
     L(G,`${actor.name} 使用：${skill.name}`,'normal');
     skill.exec(actor,target,G);
@@ -1732,7 +2000,7 @@ function showSkillPanel(actor){
       <div class="skill-desc">${sk.desc}</div>
     </button>`;
   });
-  let ultReady=actor.trigger>=TRIG_ULT;
+  let ultReady=actor.trigger>=(G&&G._triggerMax?G._triggerMax:TRIG_ULT)&&!(G&&G._ultBanned>0);
   html+=`<button class="skill-btn ult-btn" ${ultReady?'':'disabled'} onclick="playerSelectSkill('ult')">
     <div class="skill-name"><span class="ult-icon">★</span>ULT：${ch.ult.name}</div>
     <div class="skill-meta">TRIG ${actor.trigger}/${TRIG_ULT} | 目标：${ch.ult.target==='enemy'?'敌方':ch.ult.target==='ally'?'友方':'自动'}</div>
@@ -1779,6 +2047,7 @@ function switchTab(tab){
   document.getElementById('tab-orig').className='cat-tab'+(tab==='orig'?' active':'')+(selectedCategory==='gz'?' locked':'');
   document.getElementById('tab-gz').className='cat-tab'+(tab==='gz'?' active':'')+(selectedCategory==='orig'?' locked':'');
   renderSelectScreen();
+loadAISettings();
 }
 
 function renderSelectScreen(){
@@ -1823,6 +2092,7 @@ function toggleSelect(id,cat){
     selectedCategory=cat;
   }
   renderSelectScreen();
+loadAISettings();
 }
 
 function startBattle(){
@@ -1847,6 +2117,7 @@ function startBattle(){
 function resetGame(){
   selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';AQ.clear();
   renderSelectScreen();
+loadAISettings();
   showScreen('select-screen');
 }
 
@@ -1856,13 +2127,15 @@ function showScreen(id){
 }
 
 // ═══════════════ TITLE SCREEN HELPERS ═══════════════
-function goSelect(){showScreen('select-screen');renderSelectScreen();}
+function goSelect(){showScreen('select-screen');renderSelectScreen();
+loadAISettings();}
 function quickMatch(){
   selectedIds=[];selectedCategory=null;activeTab='orig';
   let pool=shuffle([...ORIG_IDS]);
   selectedIds=pool.slice(0,4);
   selectedCategory='orig';
   showScreen('select-screen');renderSelectScreen();
+loadAISettings();
 }
 function goTitle(){
   selectedIds=[];G=null;actQueue=[];actQueueIdx=0;targetMode=null;selectedCategory=null;activeTab='orig';
